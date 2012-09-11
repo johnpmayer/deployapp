@@ -1,0 +1,12 @@
+
+* deploy app
+** Motivation
+   Configure and deploy lots of servers with various profiles
+** Components
+***   Haskell Snap application
+      Using MetaHDBC!
+***   DB2 schema 
+      (currently not included)
+***   Custom Tiny Core Linux distribution 
+      (currently not included)
+      It's a pretty small diff, almost entirely boot configuration
