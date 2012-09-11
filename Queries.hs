@@ -14,6 +14,30 @@ import Config
 import Types
 --import Utils
 
+checkHostQuery :: String -> IO (Maybe Int)
+checkHostQuery mac =
+  do
+    conn <- connectODBC deployDB
+    let query = $(runStmt deployDB $ unlines
+              [ "select id from host"
+              , "where hw_address = ?mac;"
+              ])
+    query conn >>= (\results -> 
+      case results of
+        [host] -> return $ Just host
+        _      -> return Nothing)
+
+registerHostQuery :: String -> IO Integer
+registerHostQuery mac =
+  do
+    conn <- connectODBC deployDB
+    let query = $(runStmt deployDB $ unlines
+              [ "insert into host"
+              , "(hw_address, profile_id)"
+              , "values (?mac, null);"
+              ])
+    withTransaction conn query
+
 hostsQuery :: IO [Host]
 hostsQuery = 
   do
@@ -26,7 +50,7 @@ hostsQuery =
               , ", p.name"
               , "from host h"
               , "left outer join profile p"
-              , "on h.host_profile_id = p.id;"
+              , "on h.profile_id = p.id;"
               ])
     map hostFromTuple <$> query conn
 

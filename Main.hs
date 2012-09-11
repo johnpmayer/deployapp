@@ -22,16 +22,20 @@ site :: Snap ()
 site =
     ifTop (serveFile "index.html") <|>
     dir "static" (serveDirectory "static") <|>
-    route [ ("app/get/hosts", method GET $ makeJSONHandler hostsQuery)
-          , ("app/get/profiles", method GET $ makeJSONHandler profilesQuery)
-          , ("app/get/disks", method GET $ makeJSONHandler disksQuery)
-          , ("app/put/disk", method PUT createDiskHandler)
-          , ("app/delete/disk", method DELETE deleteDiskHandler)
-          , ("app/get/partitions/:disk_id", method GET $ getPartitionsHandler)
-          , ("app/put/partition", method PUT $ createPartitionHandler)
-          , ("app/delete/partition", method DELETE $ deletePartitionHandler)
-          , ("app/setup/:mac", method GET $ setupHandler)
+    route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
+          , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
+          , ("app/disks", method GET $ makeJSONHandler disksQuery)
+          , ("app/disk", method PUT createDiskHandler)
+          , ("app/disk", method DELETE deleteDiskHandler)
+          , ("app/partitions/:disk_id", method GET $ getPartitionsHandler)
+          , ("app/partition", method PUT $ createPartitionHandler)
+          , ("app/partition", method DELETE $ deletePartitionHandler)
+          , ("core/check/:mac", method GET $ checkHostHandler)
+          , ("core/register/:mac", method GET $ registerHostHandler)
+          , ("core/setup/:mac", method GET $ setupHostHandler)
           ]
+
+{- APP -}
 
 createDiskHandler :: Snap ()
 createDiskHandler =
@@ -74,8 +78,22 @@ deletePartitionHandler =
     partition <- requireInt "partition_id"
     makeJSONHandler $ deletePartitionQuery partition
 
-setupHandler :: Snap ()
-setupHandler =
+{- CORE -}
+
+checkHostHandler :: Snap ()
+checkHostHandler =
+  do
+    mac <- requireString "mac"
+    makeJSONHandler $ checkHostQuery mac
+
+registerHostHandler :: Snap ()
+registerHostHandler =
+  do
+    mac <- requireString "mac"
+    makeJSONHandler $ registerHostQuery mac
+
+setupHostHandler :: Snap ()
+setupHostHandler =
   do
     mbs <- getParam "mac"
     case mbs of

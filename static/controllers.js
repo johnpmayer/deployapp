@@ -4,7 +4,7 @@ var snap_form_headers =
 
 function Hosts($scope, $http) {
     
-    $http.get('app/get/hosts').success(function(data) {
+    $http.get('app/hosts').success(function(data) {
         $scope.hosts = data;
     });
     
@@ -13,7 +13,7 @@ function Hosts($scope, $http) {
 
 function Profiles($scope, $http) {
     
-    $http.get('app/get/profiles').success(function(data) {
+    $http.get('app/profiles').success(function(data) {
         $scope.profiles = data;
     });
     
@@ -22,7 +22,7 @@ function Profiles($scope, $http) {
 function Disks($scope, $http) {
     
     $scope.reload_disks = function() {
-        $http.get('app/get/disks').success(function(data) {
+        $http.get('app/disks').success(function(data) {
             $scope.disks = data;
         });
     }
@@ -49,7 +49,7 @@ function Disks($scope, $http) {
         //            + "'.");
 
         $http({method  : 'PUT',
-               url     : 'app/put/disk',
+               url     : 'app/disk',
                data    : $.param({ disk_name : 
                                    $scope.new_disk.name }),
                headers : snap_form_headers}
@@ -71,7 +71,7 @@ function Disk($scope, $http) {
         //  $scope.disk.disk_name + "!")
         
         $http({method  : 'DELETE',
-               url     : 'app/delete/disk',
+               url     : 'app/disk',
                data    : $.param({ disk_id :
                                    $scope.disk.disk_id }),
                headers : snap_form_headers}
@@ -87,7 +87,7 @@ function Disk($scope, $http) {
 function Partitions($scope, $http) {
     
     $scope.reload_partitions = function() {
-        $http.get('app/get/partitions/'+$scope.disk.disk_id)
+        $http.get('app/partitions/'+$scope.disk.disk_id)
             .success(function(data) {
                 $scope.partitions = data;
             });
@@ -105,6 +105,7 @@ function Partitions($scope, $http) {
 
 function Partition($scope, $http) {
     
+    /*
     $scope.from_type_id = function(type_id) {
         if (type_id === 0) {
             return "Extended";
@@ -114,6 +115,7 @@ function Partition($scope, $http) {
             return "Logical"
         }
     }
+    */
     
     $scope.delete_partition = function() {
         /*
@@ -122,7 +124,7 @@ function Partition($scope, $http) {
         */
         
         $http({ method    : 'DELETE',
-                url       : 'app/delete/partition',
+                url       : 'app/partition',
                 data      : $.param(
                     { partition_id: $scope.partition.partition_id }
                 ),
@@ -154,7 +156,7 @@ function New_Partition($scope, $http) {
         //    + ';' + $scope.new_partition.size);
         
         $http({ method    : 'PUT',
-                url       : 'app/put/partition',
+                url       : 'app/partition',
                 data      : $.param(
                     { disk_id          : $scope.disk.disk_id,
                       partition_number : $scope.new_partition.number,
