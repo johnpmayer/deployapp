@@ -1,0 +1,152 @@
+<!doctype html>
+<html ng-app="components">
+  <head>
+    <title>Deploy App</title>
+    <link rel="stylesheet" href="static/bootstrap.css" />
+    <script src="static/jquery-1.8.1.js"></script>
+    <script src="static/angular-1.0.1.js"></script>
+    <script src="static/components.js"></script>
+    <script src="static/controllers.js"></script>
+  </head>
+  <body>
+    <h1>Deploy App!!!</h1>
+    <tabs>
+      
+      <pane title="Hosts">
+        <table ng-controller="Hosts" class="table">
+          <thead>
+            <tr>
+              <th>Mac Address</th>
+              <th>Profile</th>
+            <tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="host in hosts">
+              <td>{{ host.hw_address }}</td>
+              <td>{{ host.host_profile_name }}</td>
+            </tr>
+          </tbod>
+        </table>
+      </pane>
+      
+      <pane title="Profiles">
+        <table ng-controller="Profiles" class="table">
+          <thead>
+            <tr>
+              <th>Profile Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="profile in profiles">
+              <td>{{ profile.profile_name }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </pane>
+      
+      <pane title="Disk Layouts">
+        <table ng-controller="Disks" 
+               class="table">
+          <thead>
+            <tr>
+              <th>Layout Name</th>
+              <th>Add/Remove</th>
+              <th>Partitions</th>
+            </tr>
+          </thead>
+          <tbody>
+                        
+            <tr>
+              <td>
+                Disk Name: <input ng-model="new_disk.name" required="" />
+              </td>
+              <td>
+                <a ng-click="create_disk()">Create</a>
+              </td>
+              <td />
+            </tr>
+                        
+            <tr ng-controller="Disk" 
+                ng-repeat="disk in disks">
+              <td>
+                {{ disk.disk_name }}
+                <a ng-show="!active_details[disk.disk_id]"
+                   ng-click="activate(disk.disk_id)">
+                  Expand</a>
+              </td>
+              <td>
+                <a ng-click="delete_disk()">X</a>
+              </td>
+              <td>
+
+                <table 
+                   ng-controller="Partitions" 
+                   ng-show="active_details[disk.disk_id]"
+                   class="table">
+                  <thead>
+                    <tr>
+                      <th>Partition Number</th>
+                      <th>Partition Type</th>
+                      <th>Size in Mb</th>
+                      <th>Add/Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr ng-repeat="partition in partitions"
+                        ng-controller="Partition">
+                      <td>
+                        <b>
+                          {{ partition.partition_number }}
+                        </b>
+                      </td>
+                      <td>
+                        {{ from_type_id(partition.partition_type) }}
+                        <!--
+                        <select
+                           ng-model="selection"
+                           ng-change="update_type()"
+                           ng-options="type for type in types" />
+                        -->
+                      </td>
+                      <td>{{ partition.size_in_mb }}</td>
+                      <td>
+                        <a ng-click="delete_partition()">X</a>
+                      </td>
+                    </tr>
+
+                    <tr ng-controller="New_Partition">
+                      <td>
+                        <input
+                           ng-model="new_partition.number"
+                           required="" />
+                      </td>
+                      <td>
+                        <select 
+                           ng-model="new_partition.type"
+                           ng-change="update_type()"
+                           ng-options="type for type in types" />
+                      </td>
+                      <td>
+                        <input
+                           ng-model="new_partition.size" 
+                           required=""/>
+                      </td>
+                      <td>
+                        <a ng-click="add_partition()">Add</a>
+                      </td>
+                    </tr>
+                    
+                  </tbody>
+                </table>
+                
+              </td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </pane>
+      
+    </tabs>
+  </body>
+</html>
