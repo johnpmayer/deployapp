@@ -62,9 +62,23 @@ profilesQuery =
               [ "select"
               , "  id"
               , ", name"
+              , ", description"
+              , ", disk_id"
               , "from profile;"
               ])
     map profileFromTuple <$> query conn
+
+newProfileQuery :: String -> String -> Int -> IO Integer
+newProfileQuery name desc disk =
+  do
+    conn <- connectODBC deployDB
+    let query = $(runStmt deployDB $ unlines
+              [ "insert into profile"
+              , "(name, description, disk_id)"
+              , "values"
+              , "(?name, ?desc, ?disk);"
+              ])
+    withTransaction conn query
 
 disksQuery :: IO [Disk]
 disksQuery =
@@ -109,8 +123,8 @@ diskPartitionsQuery disk =
               ])
     map partitionFromTuple <$> query conn
 
-createPrimaryPartitionQuery :: Int -> Int -> Int -> IO Integer
-createPrimaryPartitionQuery disk number size =
+newPrimaryPartitionQuery :: Int -> Int -> Int -> IO Integer
+newPrimaryPartitionQuery disk number size =
   do
     conn <- connectODBC deployDB
     let query = $(runStmt deployDB $ unlines
@@ -126,8 +140,8 @@ createPrimaryPartitionQuery disk number size =
               ])
     withTransaction conn query
     
-createExtendedPartitionQuery :: Int -> Int -> Int -> IO Integer
-createExtendedPartitionQuery disk number size =
+newExtendedPartitionQuery :: Int -> Int -> Int -> IO Integer
+newExtendedPartitionQuery disk number size =
   do
     conn <- connectODBC deployDB
     let query = $(runStmt deployDB $ unlines
@@ -142,8 +156,8 @@ createExtendedPartitionQuery disk number size =
               ])
     withTransaction conn query
     
-createLogicalPartitionQuery :: Int -> Int -> Int -> IO Integer
-createLogicalPartitionQuery disk number size =
+newLogicalPartitionQuery :: Int -> Int -> Int -> IO Integer
+newLogicalPartitionQuery disk number size =
   do
     let parttype = number
     conn <- connectODBC deployDB

@@ -2,6 +2,38 @@
 var snap_form_headers = 
     { 'Content-Type' : 'application/x-www-form-urlencoded'}
 
+var copout = function() {
+    alert("Something went wrong, contact your edge-case engineer");
+}
+
+// For use across tabs
+function Deploy($scope, $http) {
+    
+    $scope.disk_lookup = {}
+    
+    $scope.reload_disks = function() {
+        $http.get('app/disks')
+            .success(function(data) {
+                $scope.disks = data;
+                
+                //alert("Disks: " + JSON.stringify($scope.disks));
+                
+                for (var index in $scope.disks) {
+                    var disk = $scope.disks[index];
+                    //alert("Disk: " + JSON.stringify(disk));
+                    $scope.disk_lookup[disk.name] = disk.id;
+                }
+                
+                //alert("Lookup: " + 
+                //JSON.stringify($scope.disk_lookup));
+                
+            }).error(copout);
+    }
+    
+    
+    
+}
+
 function Hosts($scope, $http) {
     
     $http.get('app/hosts').success(function(data) {
@@ -13,19 +45,48 @@ function Hosts($scope, $http) {
 
 function Profiles($scope, $http) {
     
-    $http.get('app/profiles').success(function(data) {
-        $scope.profiles = data;
-    });
+    $scope.reload_profiles = function() {
+        $http.get('app/profiles').success(function(data) {
+            $scope.profiles = data;
+        }).error(copout);
+    }
     
+    $scope.reload_profiles();
+    
+    $scope.new_profile = {}
+    
+    $scope.create_profile = function() {
+        
+        var disk_id = 
+            $scope.disk_lookup[$scope.new_profile.disk.name];
+        
+        var data = 
+            $.param({ name : $scope.new_profile.name,
+                      description : $scope.new_profile.description,
+                      disk_id : disk_id });
+        
+        $http({ method       : 'PUT',
+                url          : 'app/profile',
+                data         : data,
+                headers      : snap_form_headers }
+             ).success(function(data) {
+                 //alert(data);
+                 $scope.reload_profiles();
+             }).error(copout);
+        
+    }
+                  
+    /*
+      $scope.test_lookup = function(disk_name) {
+      //alert("Disks: " + JSON.stringify($scope.disks));
+      //alert("Selection: " + JSON.stringify(disk_name));
+      //alert($scope.disk_lookup);
+      alert("Disk id: " + $scope.disk_lookup[disk_name]);
+      }
+    */
 }
 
 function Disks($scope, $http) {
-    
-    $scope.reload_disks = function() {
-        $http.get('app/disks').success(function(data) {
-            $scope.disks = data;
-        });
-    }
     
     $scope.reload_disks();
     
@@ -56,7 +117,7 @@ function Disks($scope, $http) {
              ).success(function(data) {
                  //alert(data);
                  $scope.reload_disks();
-             });
+             }).error(copout);
         
     }
     
@@ -73,12 +134,12 @@ function Disk($scope, $http) {
         $http({method  : 'DELETE',
                url     : 'app/disk',
                data    : $.param({ disk_id :
-                                   $scope.disk.disk_id }),
+                                   $scope.disk.id }),
                headers : snap_form_headers}
              ).success(function(data) {
                  //alert(data);
                  $scope.reload_disks();
-             });
+             }).error(copout);
         
     }
     
@@ -87,25 +148,24 @@ function Disk($scope, $http) {
 function Partitions($scope, $http) {
     
     $scope.reload_partitions = function() {
-        $http.get('app/partitions/'+$scope.disk.disk_id)
+        $http.get('app/partitions/'+$scope.disk.id)
             .success(function(data) {
                 $scope.partitions = data;
-            });
+            }).error(copout);
     };
     
     $scope.reload_partitions();
     
-    $scope.active_details[$scope.disk.disk_id] = false;
+    $scope.active_details[$scope.disk.id] = false;
     
     $scope.types = [ "Primary", "Extended", "Logical" ];
     
-    $scope.order_prop = "partition_number";
+    $scope.order_prop = "number";
     
 }
 
 function Partition($scope, $http) {
     
-    /*
     $scope.from_type_id = function(type_id) {
         if (type_id === 0) {
             return "Extended";
@@ -115,7 +175,6 @@ function Partition($scope, $http) {
             return "Logical"
         }
     }
-    */
     
     $scope.delete_partition = function() {
         /*
@@ -126,13 +185,13 @@ function Partition($scope, $http) {
         $http({ method    : 'DELETE',
                 url       : 'app/partition',
                 data      : $.param(
-                    { partition_id: $scope.partition.partition_id }
+                    { partition_id: $scope.partition.id }
                 ),
                 headers : snap_form_headers }
              ).success(function(data) {
                  //alert(data);
                  $scope.reload_partitions();
-             });
+             }).error(copout);
         
     }
     
@@ -158,7 +217,7 @@ function New_Partition($scope, $http) {
         $http({ method    : 'PUT',
                 url       : 'app/partition',
                 data      : $.param(
-                    { disk_id          : $scope.disk.disk_id,
+                    { disk_id          : $scope.disk.id,
                       partition_number : $scope.new_partition.number,
                       partition_type   : $scope.new_partition.type,
                       size_in_mb       : $scope.new_partition.size }
@@ -167,7 +226,7 @@ function New_Partition($scope, $http) {
              ).success(function(data) {
                  //alert(data);
                  $scope.reload_partitions();
-             });
+             }).error(copout);
         
     }
     

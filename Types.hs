@@ -19,23 +19,30 @@ hostFromTuple = uncurryN Host
 
 instance ToJSON Host where
   toJSON (Host host_id' hw_address' host_profile_id' host_profile_name') = 
-    object [ "host_id"           .= host_id'
-           , "hw_address"        .= hw_address'
-           , "host_profile_id"   .= fromMaybe (-1) host_profile_id'
-           , "host_profile_name" .= fromMaybe "unassigned" host_profile_name'
+    object [ "id"           .= host_id'
+           , "hw_address"   .= hw_address'
+           , "profile_id"   .= fromMaybe (-1) host_profile_id'
+           , "profile_name" .= fromMaybe "unassigned" host_profile_name'
            ]
 
 data Profile = Profile { profile_id :: Int
                        , profile_name :: String
+                       , profile_description :: String
+                       , profile_disk_id :: Int
                        } deriving (Show)
 
-profileFromTuple :: (Int, String) -> Profile
+profileFromTuple :: (Int, String, String, Int) -> Profile
 profileFromTuple = uncurryN Profile
 
 instance ToJSON Profile where
-  toJSON (Profile profile_id' profile_name') =
-    object [ "profile_id"   .= profile_id'
-           , "profile_name" .= profile_name'
+  toJSON (Profile profile_id' 
+                  profile_name'
+                  profile_desc'
+                  profile_disk') =
+    object [ "id"          .= profile_id'
+           , "name"        .= profile_name'
+           , "description" .= profile_desc'
+           , "disk_id"     .= profile_disk'
            ]
 
 data Disk = Disk { disk_id :: Int
@@ -47,8 +54,8 @@ diskFromTuple = uncurryN Disk
 
 instance ToJSON Disk where
   toJSON (Disk disk_id' disk_name') =
-    object [ "disk_id"   .= disk_id'
-           , "disk_name" .= disk_name'
+    object [ "id"   .= disk_id'
+           , "name" .= disk_name'
            ]
 
 data Partition = Partition { partition_id :: Int
@@ -65,8 +72,8 @@ instance ToJSON Partition where
                     partition_number'
                     partition_type'
                     size_in_mb') =
-    object [ "partition_id"     .= partition_id'
-           , "partition_number" .= partition_number'
-           , "partition_type"   .= partition_type'
-           , "size_in_mb"       .= size_in_mb'
+    object [ "id"         .= partition_id'
+           , "number"     .= partition_number'
+           , "type"       .= partition_type'
+           , "size_in_mb" .= size_in_mb'
            ]

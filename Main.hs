@@ -22,32 +22,53 @@ site :: Snap ()
 site =
     ifTop (serveFile "index.html") <|>
     dir "static" (serveDirectory "static") <|>
-    route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
-          , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
-          , ("app/disks", method GET $ makeJSONHandler disksQuery)
-          , ("app/disk", method PUT createDiskHandler)
-          , ("app/disk", method DELETE deleteDiskHandler)
-          , ("app/partitions/:disk_id", method GET $ getPartitionsHandler)
-          , ("app/partition", method PUT $ createPartitionHandler)
-          , ("app/partition", method DELETE $ deletePartitionHandler)
-          , ("core/check/:mac", method GET $ checkHostHandler)
-          , ("core/register/:mac", method GET $ registerHostHandler)
-          , ("core/setup/:mac", method GET $ setupHostHandler)
+    route [ ("app/hosts", method GET $ 
+                          makeJSONHandler hostsQuery)
+          , ("app/profiles", method GET    
+                             $ makeJSONHandler profilesQuery)
+          , ("app/profile", method PUT    
+                            createProfileHandler)
+          , ("app/disks", method GET    
+                          $ makeJSONHandler disksQuery)
+          , ("app/disk", method PUT    
+                         createDiskHandler)
+          , ("app/disk", method DELETE  
+                         deleteDiskHandler)
+          , ("app/partitions/:disk_id", method GET    
+                                        getPartitionsHandler)
+          , ("app/partition", method PUT    
+                              createPartitionHandler)
+          , ("app/partition", method DELETE 
+                              deletePartitionHandler)
+          , ("core/check/:mac", method GET    
+                                checkHostHandler)
+          , ("core/register/:mac", method GET    
+                                   registerHostHandler)
+          , ("core/setup/:host_id", method GET    
+                                setupHostHandler)
           ]
 
 {- APP -}
+
+createProfileHandler :: Snap ()
+createProfileHandler =
+  do
+    name <- requireString "name"
+    desc <- requireString "description"
+    disk <- requireInt "disk_id"
+    makeJSONHandler $ newProfileQuery name desc disk
 
 createDiskHandler :: Snap ()
 createDiskHandler =
   do
     disk_name <- requireString "disk_name"
-    makeJSONHandler . newDiskQuery $ disk_name
+    makeJSONHandler $ newDiskQuery disk_name
 
 deleteDiskHandler :: Snap ()
 deleteDiskHandler =
   do
     disk_id <- requireInt "disk_id"
-    makeJSONHandler . deleteDiskQuery $ disk_id
+    makeJSONHandler $ deleteDiskQuery disk_id
 
 getPartitionsHandler :: Snap ()
 getPartitionsHandler = 
@@ -62,14 +83,13 @@ createPartitionHandler =
     number <- requireInt "partition_number"
     partition_type <- requireString "partition_type"
     size <- requireInt "size_in_mb"
-    let mjh = makeJSONHandler
     case partition_type of
-      "Primary"  -> mjh $ 
-                    createPrimaryPartitionQuery  disk number size
-      "Extended" -> mjh $ 
-                    createExtendedPartitionQuery disk number size
-      "Logical"  -> mjh $ 
-                    createLogicalPartitionQuery  disk number size
+      "Primary"  -> makeJSONHandler $ 
+                    newPrimaryPartitionQuery  disk number size
+      "Extended" -> makeJSONHandler $ 
+                    newExtendedPartitionQuery disk number size
+      "Logical"  -> makeJSONHandler $ 
+                    newLogicalPartitionQuery  disk number size
       _          -> pass
 
 deletePartitionHandler :: Snap ()
@@ -95,7 +115,7 @@ registerHostHandler =
 setupHostHandler :: Snap ()
 setupHostHandler =
   do
-    mbs <- getParam "mac"
-    case mbs of
+    mbs <- getParam "host_id"
+    case mbs of     
       (Just bs) -> writeBS bs
       Nothing   -> pass

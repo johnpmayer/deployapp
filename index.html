@@ -10,143 +10,179 @@
   </head>
   <body>
     <h1>Deploy App!!!</h1>
-    <tabs>
-      
-      <pane title="Hosts">
-        <table ng-controller="Hosts" class="table">
-          <thead>
-            <tr>
-              <th>Mac Address</th>
-              <th>Profile</th>
-            <tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="host in hosts">
-              <td>{{ host.hw_address }}</td>
-              <td>{{ host.host_profile_name }}</td>
-            </tr>
-          </tbod>
-        </table>
-      </pane>
-      
-      <pane title="Profiles">
-        <table ng-controller="Profiles" class="table">
-          <thead>
-            <tr>
-              <th>Profile Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="profile in profiles">
-              <td>{{ profile.profile_name }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </pane>
-      
-      <pane title="Disk Layouts">
-        <table ng-controller="Disks" 
-               class="table">
-          <thead>
-            <tr>
-              <th>Layout Name</th>
-              <th>Add/Remove</th>
-              <th>Partitions</th>
-            </tr>
-          </thead>
-          <tbody>
-                        
-            <tr>
-              <td>
-                Disk Name: <input ng-model="new_disk.name" required="" />
-              </td>
-              <td>
-                <a ng-click="create_disk()">Create</a>
-              </td>
-              <td />
-            </tr>
-                        
-            <tr ng-controller="Disk" 
-                ng-repeat="disk in disks">
-              <td>
-                {{ disk.disk_name }}
-                <a ng-show="!active_details[disk.disk_id]"
-                   ng-click="activate(disk.disk_id)">
-                  Expand</a>
-              </td>
-              <td>
-                <a ng-click="delete_disk()">X</a>
-              </td>
-              <td>
 
-                <table 
-                   ng-controller="Partitions" 
-                   ng-show="active_details[disk.disk_id]"
-                   class="table">
-                  <thead>
-                    <tr>
-                      <th>Partition Number</th>
-                      <th>Partition Type</th>
-                      <th>Size in Mb</th>
-                      <th>Add/Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    
-                    <tr ng-repeat="partition in partitions"
-                        ng-controller="Partition">
-                      <td>
-                        <b>
-                          {{ partition.partition_number }}
-                        </b>
-                      </td>
-                      <td>
-                        {{ from_type_id(partition.partition_type) }}
-                        <!--
-                        <select
-                           ng-model="selection"
-                           ng-change="update_type()"
-                           ng-options="type for type in types" />
-                        -->
-                      </td>
-                      <td>{{ partition.size_in_mb }}</td>
-                      <td>
-                        <a ng-click="delete_partition()">X</a>
-                      </td>
-                    </tr>
-
-                    <tr ng-controller="New_Partition">
-                      <td>
-                        <input
-                           ng-model="new_partition.number"
-                           required="" />
-                      </td>
-                      <td>
-                        <select 
-                           ng-model="new_partition.type"
-                           ng-change="update_type()"
-                           ng-options="type for type in types" />
-                      </td>
-                      <td>
-                        <input
-                           ng-model="new_partition.size" 
-                           required=""/>
-                      </td>
-                      <td>
-                        <a ng-click="add_partition()">Add</a>
-                      </td>
-                    </tr>
-                    
-                  </tbody>
-                </table>
-                
-              </td>
-            </tr>
-            
-          </tbody>
-        </table>
-      </pane>
-      
-    </tabs>
+    <div ng-controller="Deploy">
+      <tabs>
+        
+        <pane title="Hosts">
+          <table ng-controller="Hosts" class="table">
+            <thead>
+              <tr>
+                <th>Mac Address</th>
+                <th>Profile</th>
+              <tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="host in hosts">
+                <td>{{ host.hw_address }}</td>
+                <td>{{ host.profile_name }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </pane>
+        
+        <pane title="Profiles">
+          <table ng-controller="Profiles" class="table">
+            <thead>
+              <tr>
+                <th>Add/Remove</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Disk Layout</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>
+                  <a ng-click="create_profile()">Create</a>
+                </td>
+                <td>
+                  <input ng-model="new_profile.name"
+                         required="" />
+                </td>
+                <td>
+                  <input ng-model="new_profile.description"
+                         required="" />
+                </td>
+                <td>
+                  <select ng-model="new_profile.disk"
+                          ng-options="disk.name for disk in disks" />
+                </td>
+              </tr>
+              
+              <tr ng-repeat="profile in profiles">
+                <td>
+                  <a ng-click="delete_profile()">X</a>
+                </td>
+                <td>{{ profile.name }}</td>
+                <td>{{ profile.description }}</td>
+                <td>{{ profile.disk_id }}</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </pane>
+        
+        <pane title="Disk Layouts">
+          <table ng-controller="Disks" 
+                 class="table">
+            <thead>
+              <tr>
+                <th>Add/Remove</th>
+                <th>Layout Name</th>
+                <th>Partitions</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>
+                  <a ng-click="create_disk()">Create</a>
+                </td>
+                <td>
+                  <input ng-model="new_disk.name" 
+                         required="" />
+                </td>
+                <td>
+                  <span ng-show="!current_active">
+                    Edit partitions after creating a new disk layout
+                  </span>
+                </td>
+                <td />
+              </tr>
+              
+              <tr ng-controller="Disk" 
+                  ng-repeat="disk in disks">
+                <td>
+                  <a ng-click="delete_disk()">X</a>
+                </td>
+                <td>
+                  {{ disk.name }}
+                  <a ng-show="!active_details[disk.id]"
+                     ng-click="activate(disk.id)">
+                    Expand</a>
+                </td>
+                <td>
+                  
+                  <table 
+                     ng-controller="Partitions" 
+                     ng-show="active_details[disk.id]"
+                     class="table">
+                    <thead>
+                      <tr>
+                        <th>Add/Remove</th>
+                        <th>Partition Number</th>
+                        <th>Partition Type</th>
+                        <th>Size in Mb</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      
+                      <tr ng-controller="New_Partition">
+                        <td>
+                          <a ng-click="add_partition()">Add</a>
+                        </td>
+                        <td>
+                          <input
+                             ng-model="new_partition.number"
+                             required="" />
+                        </td>
+                        <td>
+                          <select 
+                             ng-model="new_partition.type"
+                             ng-options="type for type in types" />
+                        </td>
+                        <td>
+                          <input
+                             ng-model="new_partition.size" 
+                             required=""/>
+                        </td>
+                      </tr>
+                      
+                      <tr ng-repeat="partition in partitions | orderBy:order_prop"
+                          ng-controller="Partition">
+                        <td>
+                          <a ng-click="delete_partition()">X</a>
+                        </td>
+                        <td>
+                          <b>
+                            {{ partition.number }}
+                          </b>
+                        </td>
+                        <td>
+                          {{ from_type_id(partition.type) }}
+                          <!--
+                              <select
+                                 ng-model="selection"
+                                 ng-change="update_type()"
+                                 ng-options="type for type in types" />
+                              -->
+                        </td>
+                        <td>{{ partition.size_in_mb }}</td>
+                      </tr>
+                      
+                    </tbody>
+                  </table>
+                  
+                </td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </pane>
+        
+      </tabs>
+    </div>
   </body>
 </html>
