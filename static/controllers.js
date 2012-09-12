@@ -30,6 +30,22 @@ function Deploy($scope, $http) {
             }).error(copout);
     }
     
+    $scope.profile_lookup = {}
+    
+    $scope.reload_profiles = function() {
+        $http.get('app/profiles')
+            .success(function(data) {
+                $scope.profiles = data;
+                
+                for (var index in $scope.profiles) {
+                    
+                    var profile = $scope.profiles[index];
+                    $scope.profile_lookup[profile.name] = profile.id;
+
+                }
+                
+            }).error(copout);
+    }
     
     
 }
@@ -40,17 +56,24 @@ function Hosts($scope, $http) {
         $scope.hosts = data;
     });
     
-    //$scope.orderProp = "host_id";
+    $scope.hostOrderProp = "hw_address";
+}
+
+function Host($scope, $http) {
+    
+    $scope.update_host_profile = function() {
+        
+        alert('Changing host ' + $scope.host.hw_address +
+              ' to profile:  ' + $scope.host.new_profile.id +
+              ':' + $scope.host.new_profile.name + '!');
+        
+        
+    }
+
 }
 
 function Profiles($scope, $http) {
-    
-    $scope.reload_profiles = function() {
-        $http.get('app/profiles').success(function(data) {
-            $scope.profiles = data;
-        }).error(copout);
-    }
-    
+        
     $scope.reload_profiles();
     
     $scope.new_profile = {}

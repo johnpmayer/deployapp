@@ -20,12 +20,20 @@
               <tr>
                 <th>Mac Address</th>
                 <th>Profile</th>
+                <th>Reboot</th>
               <tr>
             </thead>
             <tbody>
-              <tr ng-repeat="host in hosts">
+              <tr ng-controller="Host"
+                  ng-repeat="host in hosts | orderBy:hostOrderProp">
                 <td>{{ host.hw_address }}</td>
-                <td>{{ host.profile_name }}</td>
+                <td>
+                  <select
+                     ng-model="host.new_profile"
+                     ng-change="update_host_profile()"
+                     ng-options="profile.name for profile in profiles" />
+                </td>
+                <td><a ng-click="reboot()">Reboot</a></td>
               </tr>
             </tbody>
           </table>
