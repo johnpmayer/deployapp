@@ -6,6 +6,8 @@ module Queries where
 
 import Control.Applicative
 
+import Data.List
+
 import Database.HDBC
 import Database.HDBC.ODBC
 import Database.MetaHDBC
@@ -204,5 +206,25 @@ deletePartitionQuery partitionid =
               [ "delete from disk_partition"
               , "where id = ?partitionid"
               ])
-    
+
+dropMaybe4 :: [(Maybe a, Maybe b, Maybe c, Maybe d)] -> [(a,b,c,d)]
+dropMaybe4 [] = []
+dropMaybe4 ((Just a, Just b, Just c, Just d):t) 
+           = (a,b,c,d) : dropMaybe4 t
+
+fdiskQuery :: Int -> IO [Partition]
+fdiskQuery host =
+  do
+    results <- runQuery $(compileQuery $ unlines
+        [ "select"
+        , "p.id, p.partition_number, p.partition_type, p.size_in_mb"
+        , "from host h"
+        , "left outer join profile f on h.profile_id = f.id"
+        , "left outer join disk d on f.disk_id = d.id"
+        , "left outer join disk_partition p on d.id = p.disk_id"
+        , "where h.id = ?host;"
+--        , "order by p.partition_number"
+        ])
+    let goodResults = dropMaybe4 results
+    return . sort $ map partitionFromTuple goodResults
 

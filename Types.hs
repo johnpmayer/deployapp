@@ -5,6 +5,7 @@
 module Types where
 
 import Data.Aeson
+import Data.List
 import Data.Maybe
 import Data.Tuple.Curry
 
@@ -12,7 +13,7 @@ data Host = Host { host_id :: Int
                  , hw_address :: String
                  , host_profile_id :: Maybe Int
                  , host_profile_name :: Maybe String
-                 }
+                 } deriving (Show)
 
 hostFromTuple :: (Int, String, Maybe Int, Maybe String) -> Host
 hostFromTuple = uncurryN Host
@@ -62,7 +63,7 @@ data Partition = Partition { partition_id :: Int
                            , partition_number :: Int
                            , partition_type :: Int
                            , size_in_mb :: Int
-                           } deriving (Show)
+                           } deriving (Show, Eq, Ord)
 
 partitionFromTuple :: (Int, Int, Int, Int) -> Partition
 partitionFromTuple = uncurryN Partition
@@ -77,3 +78,7 @@ instance ToJSON Partition where
            , "type"       .= partition_type'
            , "size_in_mb" .= size_in_mb'
            ]
+
+fdiskEntry :: Partition -> String
+fdiskEntry (Partition _id number' type' size') =
+  concat . intersperse ":" . map show $ [number',type',size']

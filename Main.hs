@@ -5,8 +5,8 @@
 module Main where
 
 import           Control.Applicative
-
---import qualified Data.ByteString.Char8 as B
+import           Control.Monad.IO.Class
+import qualified Data.ByteString.Lazy.Char8 as B
 
 --import           Data.Tuple.Sequence
 
@@ -16,6 +16,7 @@ import           Snap.Http.Server
 
 import           Queries
 import           Utils
+import           Types
 
 main :: IO ()
 main = quickHttpServe site
@@ -42,7 +43,7 @@ site =
 
           , ("core/check/:mac", method GET checkHost)
           , ("core/register/:mac", method GET registerHost)
-          , ("core/setup/:host_id", method GET setupHost)
+          , ("core/fdisk/:host_id", method GET fdisk)
           ]
 
 {- APP -}
@@ -71,35 +72,35 @@ createProfile =
 deleteProfile :: Snap ()
 deleteProfile =
   do
-    profile_id <- requireInt "profile_id"
-    makeJSONHandler $ deleteProfileQuery profile_id
+    profile_id' <- requireInt "profile_id"
+    makeJSONHandler $ deleteProfileQuery profile_id'
 
 createDisk :: Snap ()
 createDisk =
   do
-    disk_name <- requireString "disk_name"
-    makeJSONHandler $ newDiskQuery disk_name
+    disk_name' <- requireString "disk_name"
+    makeJSONHandler $ newDiskQuery disk_name'
 
 deleteDisk :: Snap ()
 deleteDisk =
   do
-    disk_id <- requireInt "disk_id"
-    makeJSONHandler $ deleteDiskQuery disk_id
+    disk_id' <- requireInt "disk_id"
+    makeJSONHandler $ deleteDiskQuery disk_id'
 
 getPartitions :: Snap ()
 getPartitions = 
   do
-    disk_id <- requireInt "disk_id"
-    makeJSONHandler $ diskPartitionsQuery disk_id
+    disk_id' <- requireInt "disk_id"
+    makeJSONHandler $ diskPartitionsQuery disk_id'
 
 createPartition :: Snap ()
 createPartition =
   do
     disk <- requireInt "disk_id"
     number <- requireInt "partition_number"
-    partition_type <- requireString "partition_type"
+    partition_type' <- requireString "partition_type"
     size <- requireInt "size_in_mb"
-    case partition_type of
+    case partition_type' of
       "Primary"  -> makeJSONHandler $ 
                     newPrimaryPartitionQuery  disk number size
       "Extended" -> makeJSONHandler $ 
@@ -128,10 +129,9 @@ registerHost =
     mac <- requireString "mac"
     makeJSONHandler $ registerHostQuery mac
 
-setupHost :: Snap ()
-setupHost =
+fdisk :: Snap ()
+fdisk = 
   do
-    mbs <- getParam "host_id"
-    case mbs of     
-      (Just bs) -> writeBS bs
-      Nothing   -> pass
+    host_id' <- requireInt "host_id"
+    partitions <- liftIO $ fdiskQuery host_id'
+    writeLBS . B.pack . unlines . map fdiskEntry $ partitions

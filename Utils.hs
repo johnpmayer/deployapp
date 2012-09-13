@@ -29,11 +29,12 @@ deployDB = "DSN=DeployDB;Uid=deployapp;Pwd=4data"
 compileQuery :: String -> ExpQ
 compileQuery = runStmt deployDB
 
-runQuery :: (Connection -> IO a) -> IO a
+runQuery :: Show a => (Connection -> IO a) -> IO a
 runQuery query =
   do
     conn <- connectODBC deployDB
     result <- withTransaction conn query
+    putStrLn . show $ result
     disconnect conn
     return result
 
