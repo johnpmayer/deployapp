@@ -10,6 +10,7 @@ var copout = function() {
 function Deploy($scope, $http) {
     
     $scope.disk_lookup = {}
+    $scope.disk_reverse_lookup = {}
     
     $scope.reload_disks = function() {
         $http.get('app/disks')
@@ -21,7 +22,8 @@ function Deploy($scope, $http) {
                 for (var index in $scope.disks) {
                     var disk = $scope.disks[index];
                     //alert("Disk: " + JSON.stringify(disk));
-                    $scope.disk_lookup[disk.name] = disk.id;
+                    $scope.disk_lookup[disk.id] = disk.name;
+                    $scope.disk_reverse_lookup[disk.name] = disk.id;
                 }
                 
                 //alert("Lookup: " + 
@@ -52,21 +54,61 @@ function Deploy($scope, $http) {
 
 function Hosts($scope, $http) {
     
-    $http.get('app/hosts').success(function(data) {
-        $scope.hosts = data;
-    });
+    $scope.reload_hosts = function() {
+        $http.get('app/hosts').success(function(data) {
+            $scope.hosts = data;
+        });
+    }
+    
+    $scope.reload_hosts();
     
     $scope.hostOrderProp = "hw_address";
 }
 
 function Host($scope, $http) {
-    
+
     $scope.update_host_profile = function() {
         
-        alert('Changing host ' + $scope.host.hw_address +
+        alert('Changing host (id=' + $scope.host.id + '):' +
+              $scope.host.hw_address +
               ' to profile:  ' + $scope.host.new_profile.id +
               ':' + $scope.host.new_profile.name + '!');
         
+        var host_id = $scope.host.id;
+        var profile_id = $scope.host.new_profile.id;
+        
+        var data = $.param({ host_id    : host_id,
+                             profile_id : profile_id });
+
+        $http({ method        : 'POST',
+                url           : 'app/host/profile',
+                data          : data,
+                headers       : snap_form_headers }
+              ).success(function(data) {
+                  alert(data);
+                  $scope.reload_hosts()
+              }).error(copout);
+        
+    }
+    
+    $scope.unassign_host_profile = function() {
+        
+        alert('Unassigning host (id=' + $scope.host.id + '):' +
+              $scope.host.hw_address +
+              ' profile:  ');
+        
+        var host_id = $scope.host.id;
+        
+        var data = $.param({ host_id    : host_id });
+
+        $http({ method        : 'DELETE',
+                url           : 'app/host/profile',
+                data          : data,
+                headers       : snap_form_headers }
+              ).success(function(data) {
+                  alert(data);
+                  $scope.reload_hosts()
+              }).error(copout);
         
     }
 
@@ -81,7 +123,7 @@ function Profiles($scope, $http) {
     $scope.create_profile = function() {
         
         var disk_id = 
-            $scope.disk_lookup[$scope.new_profile.disk.name];
+            $scope.disk_reverse_lookup[$scope.new_profile.disk.name];
         
         var data = 
             $.param({ name : $scope.new_profile.name,
@@ -107,6 +149,30 @@ function Profiles($scope, $http) {
       alert("Disk id: " + $scope.disk_lookup[disk_name]);
       }
     */
+}
+
+function Profile($scope, $http) {
+    
+    $scope.delete_profile = function() {
+        
+        //alert('Attempting to delete profile ' +
+        //$scope.profile.id + ':' + 
+        //$scope.profile.name + "!");
+        
+        var id = $scope.profile.id;
+        var data = $.param({ profile_id: id });
+        
+        $http({ method     : 'DELETE',
+                url        : 'app/profile',
+                data       : data,
+                headers    : snap_form_headers }
+             ).success(function(data) {
+                 //alert(data);
+                 $scope.reload_profiles();
+             }).error(copout);
+        
+    }
+    
 }
 
 function Disks($scope, $http) {
@@ -184,6 +250,37 @@ function Partitions($scope, $http) {
     $scope.types = [ "Primary", "Extended", "Logical" ];
     
     $scope.order_prop = "number";
+
+    $scope.calc_type_id = function() {
+        if ($scope.new_partition.type === "Extended") {
+            return 0;
+        } else {
+            return $scope.new_partition.number;
+        }
+    };
+    
+    $scope.new_partition = {}
+    
+    $scope.add_partition = function() {
+        //alert($scope.new_partition.number
+        //      + ';' + $scope.calc_type_id()
+        //    + ';' + $scope.new_partition.size);
+        
+        $http({ method    : 'PUT',
+                url       : 'app/partition',
+                data      : $.param(
+                    { disk_id          : $scope.disk.id,
+                      partition_number : $scope.new_partition.number,
+                      partition_type   : $scope.new_partition.type,
+                      size_in_mb       : $scope.new_partition.size }
+                ),
+                headers   : snap_form_headers}
+             ).success(function(data) {
+                 //alert(data);
+                 $scope.reload_partitions();
+             }).error(copout);
+        
+    }
     
 }
 
@@ -220,37 +317,3 @@ function Partition($scope, $http) {
     
 }
 
-function New_Partition($scope, $http) {
-
-    $scope.calc_type_id = function() {
-        if ($scope.new_partition.type === "Extended") {
-            return 0;
-        } else {
-            return $scope.new_partition.number;
-        }
-    };
-    
-    $scope.new_partition = {}
-    
-    $scope.add_partition = function() {
-        //alert($scope.new_partition.number
-        //      + ';' + $scope.calc_type_id()
-        //    + ';' + $scope.new_partition.size);
-        
-        $http({ method    : 'PUT',
-                url       : 'app/partition',
-                data      : $.param(
-                    { disk_id          : $scope.disk.id,
-                      partition_number : $scope.new_partition.number,
-                      partition_type   : $scope.new_partition.type,
-                      size_in_mb       : $scope.new_partition.size }
-                ),
-                headers   : snap_form_headers}
-             ).success(function(data) {
-                 //alert(data);
-                 $scope.reload_partitions();
-             }).error(copout);
-        
-    }
-    
-}

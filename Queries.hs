@@ -1,5 +1,5 @@
 
-{-# OPTIONS -Wall #-}
+{-# Options -Wall #-}
 {-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
 
 module Queries where
@@ -10,19 +10,17 @@ import Database.HDBC
 import Database.HDBC.ODBC
 import Database.MetaHDBC
 
-import Config
 import Types
---import Utils
+import Utils
 
 checkHostQuery :: String -> IO (Maybe Int)
 checkHostQuery mac =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "select id from host"
               , "where hw_address = ?mac;"
               ])
-    query conn >>= (\results -> 
+     >>= (\results -> 
       case results of
         [host] -> return $ Just host
         _      -> return Nothing)
@@ -30,19 +28,17 @@ checkHostQuery mac =
 registerHostQuery :: String -> IO Integer
 registerHostQuery mac =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "insert into host"
               , "(hw_address, profile_id)"
               , "values (?mac, null);"
               ])
-    withTransaction conn query
+    
 
 hostsQuery :: IO [Host]
 hostsQuery = 
-  do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+  do    
+    map hostFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  h.id"
               , ", h.hw_address"
@@ -52,13 +48,32 @@ hostsQuery =
               , "left outer join profile p"
               , "on h.profile_id = p.id;"
               ])
-    map hostFromTuple <$> query conn
+    
+
+updateHostProfileQuery :: Int -> Int -> IO Integer
+updateHostProfileQuery host profile =
+  do
+    runQuery $(compileQuery $ unlines
+              [ "update host"
+              , "set profile_id = ?profile"
+              , "where id = ?host;"
+              ])
+    
+
+unassignHostProfileQuery :: Int -> IO Integer
+unassignHostProfileQuery host =
+  do
+    runQuery $(compileQuery $ unlines
+              [ "update host"
+              , "set profile_id = null"
+              , "where id = ?host;"
+              ])
+    
 
 profilesQuery :: IO [Profile]
 profilesQuery = 
   do 
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    map profileFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  id"
               , ", name"
@@ -66,53 +81,55 @@ profilesQuery =
               , ", disk_id"
               , "from profile;"
               ])
-    map profileFromTuple <$> query conn
+    
 
 newProfileQuery :: String -> String -> Int -> IO Integer
 newProfileQuery name desc disk =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "insert into profile"
               , "(name, description, disk_id)"
               , "values"
               , "(?name, ?desc, ?disk);"
               ])
-    withTransaction conn query
+    
+
+deleteProfileQuery :: Int -> IO Integer
+deleteProfileQuery profile =
+  do
+    runQuery $(compileQuery $
+              "delete from profile where id = ?profile;")
+    
 
 disksQuery :: IO [Disk]
 disksQuery =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    map diskFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
               ,  "  id"
               ,  ", name"
               ,  "from disk;"
               ])
-    map diskFromTuple <$> query conn
+    
 
 newDiskQuery :: String -> IO Integer
 newDiskQuery diskname =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ 
+    runQuery $(compileQuery $ 
               "insert into disk (name) values (?diskname);")
-    withTransaction conn query
+    
 
 deleteDiskQuery :: Int -> IO Integer
 deleteDiskQuery disk =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $
+    runQuery $(compileQuery $
               "delete from disk where id = ?disk;")
-    withTransaction conn query
+    
     
 diskPartitionsQuery :: Int -> IO [Partition]
 diskPartitionsQuery disk =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    map partitionFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  id"
               , ", partition_number"
@@ -121,72 +138,71 @@ diskPartitionsQuery disk =
               , "from disk_partition"
               , "where disk_id = ?disk;"
               ])
-    map partitionFromTuple <$> query conn
+    
 
 newPrimaryPartitionQuery :: Int -> Int -> Int -> IO Integer
 newPrimaryPartitionQuery disk number size =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
               , ", size_in_mb"
-              , ", extended_partition_number"
-              , ", extended_partition_type"
+              , ", chain_partition_number"
+              , ", chain_partition_type"
               , ") values (?disk, ?number, ?number"
               , "         , ?size, null, null);"
               ])
-    withTransaction conn query
+    
     
 newExtendedPartitionQuery :: Int -> Int -> Int -> IO Integer
 newExtendedPartitionQuery disk number size =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
               , ", size_in_mb"
-              , ", extended_partition_number"
-              , ", extended_partition_type"
+              , ", chain_partition_number"
+              , ", chain_partition_type"
               , ") values (?disk, ?number, 0, ?size, null, null);"
               ])
-    withTransaction conn query
+    
     
 newLogicalPartitionQuery :: Int -> Int -> Int -> IO Integer
 newLogicalPartitionQuery disk number size =
   do
     let parttype = number
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    let (expartn, expartt) = if number==5 
+                             then (0,0)
+                             else (number-1,number-1)
+    runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
               , ", size_in_mb"
-              , ", extended_partition_number"
-              , ", extended_partition_type"
+              , ", chain_partition_number"
+              , ", chain_partition_type"
               , ")"
               , "values"
               , "( ?disk, ?number, ?number, ?size"
-              , ", (select dp.partition_number"    
+              , ", max(?expartn,(select dp.partition_number"    
               , "  from disk_partition dp"
               , "  where dp.disk_id = ?disk"
-              , "  and dp.partition_type = 0)"
-              , ", 0);" 
+              , "  and dp.partition_type = 0))"
+              , ", ?expartt);" 
               ])
-    withTransaction conn query
+    
 
 deletePartitionQuery :: Int -> IO Integer
 deletePartitionQuery partitionid =
   do
-    conn <- connectODBC deployDB
-    let query = $(runStmt deployDB $ unlines
+    runQuery $(compileQuery $ unlines
               [ "delete from disk_partition"
               , "where id = ?partitionid"
               ])
-    withTransaction conn query
+    
 

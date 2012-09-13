@@ -8,6 +8,8 @@ import           Control.Applicative
 
 --import qualified Data.ByteString.Char8 as B
 
+--import           Data.Tuple.Sequence
+
 import           Snap.Core
 import           Snap.Util.FileServe
 import           Snap.Http.Server
@@ -22,62 +24,76 @@ site :: Snap ()
 site =
     ifTop (serveFile "index.html") <|>
     dir "static" (serveDirectory "static") <|>
-    route [ ("app/hosts", method GET $ 
-                          makeJSONHandler hostsQuery)
-          , ("app/profiles", method GET    
-                             $ makeJSONHandler profilesQuery)
-          , ("app/profile", method PUT    
-                            createProfileHandler)
-          , ("app/disks", method GET    
-                          $ makeJSONHandler disksQuery)
-          , ("app/disk", method PUT    
-                         createDiskHandler)
-          , ("app/disk", method DELETE  
-                         deleteDiskHandler)
-          , ("app/partitions/:disk_id", method GET    
-                                        getPartitionsHandler)
-          , ("app/partition", method PUT    
-                              createPartitionHandler)
-          , ("app/partition", method DELETE 
-                              deletePartitionHandler)
-          , ("core/check/:mac", method GET    
-                                checkHostHandler)
-          , ("core/register/:mac", method GET    
-                                   registerHostHandler)
-          , ("core/setup/:host_id", method GET    
-                                setupHostHandler)
+    route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
+          , ("app/host/profile", method POST updateHostProfile <|>
+                                 method DELETE unassignHostProfile)
+
+          , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
+          , ("app/profile", method PUT createProfile <|>
+                            method DELETE deleteProfile)
+
+          , ("app/disks", method GET $ makeJSONHandler disksQuery)
+          , ("app/disk", method PUT createDisk <|>
+                         method DELETE deleteDisk)
+
+          , ("app/partitions/:disk_id", method GET getPartitions)
+          , ("app/partition", method PUT createPartition <|>
+                              method DELETE deletePartition)
+
+          , ("core/check/:mac", method GET checkHost)
+          , ("core/register/:mac", method GET registerHost)
+          , ("core/setup/:host_id", method GET setupHost)
           ]
 
 {- APP -}
 
-createProfileHandler :: Snap ()
-createProfileHandler =
+updateHostProfile :: Snap ()
+updateHostProfile = 
+  do
+    host <- requireInt "host_id"
+    profile <- requireInt "profile_id"
+    makeJSONHandler $ updateHostProfileQuery host profile
+
+unassignHostProfile :: Snap ()
+unassignHostProfile =
+  do
+    host <- requireInt "host_id"
+    makeJSONHandler $ unassignHostProfileQuery host
+
+createProfile :: Snap ()
+createProfile =
   do
     name <- requireString "name"
     desc <- requireString "description"
     disk <- requireInt "disk_id"
     makeJSONHandler $ newProfileQuery name desc disk
 
-createDiskHandler :: Snap ()
-createDiskHandler =
+deleteProfile :: Snap ()
+deleteProfile =
+  do
+    profile_id <- requireInt "profile_id"
+    makeJSONHandler $ deleteProfileQuery profile_id
+
+createDisk :: Snap ()
+createDisk =
   do
     disk_name <- requireString "disk_name"
     makeJSONHandler $ newDiskQuery disk_name
 
-deleteDiskHandler :: Snap ()
-deleteDiskHandler =
+deleteDisk :: Snap ()
+deleteDisk =
   do
     disk_id <- requireInt "disk_id"
     makeJSONHandler $ deleteDiskQuery disk_id
 
-getPartitionsHandler :: Snap ()
-getPartitionsHandler = 
+getPartitions :: Snap ()
+getPartitions = 
   do
     disk_id <- requireInt "disk_id"
     makeJSONHandler $ diskPartitionsQuery disk_id
 
-createPartitionHandler :: Snap ()
-createPartitionHandler =
+createPartition :: Snap ()
+createPartition =
   do
     disk <- requireInt "disk_id"
     number <- requireInt "partition_number"
@@ -92,28 +108,28 @@ createPartitionHandler =
                     newLogicalPartitionQuery  disk number size
       _          -> pass
 
-deletePartitionHandler :: Snap ()
-deletePartitionHandler =
+deletePartition :: Snap ()
+deletePartition =
   do
     partition <- requireInt "partition_id"
     makeJSONHandler $ deletePartitionQuery partition
 
 {- CORE -}
 
-checkHostHandler :: Snap ()
-checkHostHandler =
+checkHost :: Snap ()
+checkHost =
   do
     mac <- requireString "mac"
     makeJSONHandler $ checkHostQuery mac
 
-registerHostHandler :: Snap ()
-registerHostHandler =
+registerHost :: Snap ()
+registerHost =
   do
     mac <- requireString "mac"
     makeJSONHandler $ registerHostQuery mac
 
-setupHostHandler :: Snap ()
-setupHostHandler =
+setupHost :: Snap ()
+setupHost =
   do
     mbs <- getParam "host_id"
     case mbs of     

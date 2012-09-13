@@ -1,12 +1,43 @@
 
+{-# OPTIONS -Wall #-}
+{-# Language NoMonomorphismRestriction #-}
+
 module Utils where
 
 import           Control.Monad
 import           Control.Monad.IO.Class
+
 import           Data.Aeson
 import qualified Data.ByteString.Char8 as B
+
+import           Database.HDBC
+import           Database.MetaHDBC
+
+import           Language.Haskell.TH
+
 import           Snap.Core
 
+-- project modules
+
+--import Config
+
+deployDB :: String
+deployDB = "DSN=DeployDB;Uid=deployapp;Pwd=4data"
+
+{- Database utilities -}
+
+compileQuery :: String -> ExpQ
+compileQuery = runStmt deployDB
+
+runQuery :: (Connection -> IO a) -> IO a
+runQuery query =
+  do
+    conn <- connectODBC deployDB
+    result <- withTransaction conn query
+    disconnect conn
+    return result
+
+{- Snap utilities -}
 
 makeJSONHandler :: ToJSON a => IO a -> Snap ()
 makeJSONHandler query = liftIO query >>= (writeLBS . encode)
@@ -49,5 +80,4 @@ safeRead maybe_s =
     case reads s of
       [(x, "")] -> return x
       _ -> mzero
-
 

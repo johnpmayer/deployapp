@@ -20,21 +20,34 @@
               <tr>
                 <th>Mac Address</th>
                 <th>Profile</th>
+                <th></th>
                 <th>Reboot</th>
               <tr>
             </thead>
             <tbody>
+              
               <tr ng-controller="Host"
                   ng-repeat="host in hosts | orderBy:hostOrderProp">
                 <td>{{ host.hw_address }}</td>
                 <td>
+                  <b>
+                    {{ host.profile_name }}
+                  </b>                    
+                  <a ng-click="unassign_host_profile()">(unassign)</a>
+                </td>
+                <td>
+                  Update                  
                   <select
                      ng-model="host.new_profile"
                      ng-change="update_host_profile()"
-                     ng-options="profile.name for profile in profiles" />
+                     ng-options="profile.name for profile in profiles"
+                     ></select>
+
+
                 </td>
-                <td><a ng-click="reboot()">Reboot</a></td>
+                <td><a ng-click="reboot_host()">Reboot</a></td>
               </tr>
+              
             </tbody>
           </table>
         </pane>
@@ -69,13 +82,14 @@
                 </td>
               </tr>
               
-              <tr ng-repeat="profile in profiles">
+              <tr ng-repeat="profile in profiles"
+                  ng-controller="Profile">
                 <td>
                   <a ng-click="delete_profile()">X</a>
                 </td>
                 <td>{{ profile.name }}</td>
                 <td>{{ profile.description }}</td>
-                <td>{{ profile.disk_id }}</td>
+                <td>{{ disk_lookup[profile.disk_id] }}</td>
               </tr>
               
             </tbody>
@@ -137,7 +151,7 @@
                     </thead>
                     <tbody>
                       
-                      <tr ng-controller="New_Partition">
+                      <tr>
                         <td>
                           <a ng-click="add_partition()">Add</a>
                         </td>
