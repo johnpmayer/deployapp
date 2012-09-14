@@ -21,35 +21,53 @@ dhcpdBaseConfig = dhcpDir ++ "dhcpd.conf.base"
 dhcpdConfig :: FilePath
 dhcpdConfig = dhcpDir ++ "dhcpd.conf"
 
+reconfigureDhcpd :: IO ()
+reconfigureDhcpd = 
+  do
+    rewriteDhcpdConfig
+    restartDhcpd
+
 restartCommand :: CreateProcess
 restartCommand = shell "systemctl restart dhcpd.service"
 
-restartDhcpd :: IO ExitCode
+statusCommand :: CreateProcess
+statusCommand = shell "systemctl status dhcpd.service; cat /etc/dhcp/dhcpd.conf"
+
+restartDhcpd :: IO ()
 restartDhcpd =
   do
-    (_stdin, _stdout, _stderr, pid) <- createProcess restartCommand
-    waitForProcess pid
+    (_stdin, _stdout, _stderr, pid1) <- createProcess restartCommand
+    _ <- waitForProcess pid1
+    (_stdin, _stdout, _stderr, pid2) <- createProcess statusCommand
+    _ <- waitForProcess pid2
+    return ()
 
 rewriteDhcpdConfig :: IO ()
 rewriteDhcpdConfig =
   do
     base <- B.readFile dhcpdBaseConfig
     hosts <- hostsQuery
-    let output = B.concat (base : map (formatEntry.entryFromHost) hosts)
+    let leased_hosts = filter (\h -> ip_address h /= Nothing) hosts
+    let entries = map entryFromHost leased_hosts
+    let output = B.concat (base : map formatEntry entries)
     B.writeFile dhcpdConfig output
 
-data Entry = Entry { hw_address :: String, ip_address :: String }
+data Entry = Entry { hw_address :: String
+                   , leased_ip_address :: Maybe Int 
+                   }
 
 formatEntry :: Entry -> B.ByteString
 formatEntry (Entry hw_address' ip_address') =
-  B.pack . unlines $ 
-         [ "host {"
+  B.pack $ case ip_address' of
+    Nothing -> ""
+    Just lease -> unlines $ 
+         [ concat ["host ", filter (/=':') hw_address', " {"]
          , concat ["  hardware ethernet ", hw_address', ";"]
-         , concat ["  fixed-address ", ip_address', ";"]
-         , "}" 
+         , concat ["  fixed-address 192.168.1.", show lease, ";"]
+         , "}"
          , "" 
          ]
 
 entryFromHost :: Host -> Entry
-entryFromHost (Host _id hw_address' {- ip_address -} _profid _profname) =
-  Entry hw_address' "fak.efa.kef.ake"
+entryFromHost (Host _id hw_address' ip_address' _profid) =
+  Entry hw_address' ip_address'

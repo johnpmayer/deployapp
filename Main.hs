@@ -20,7 +20,10 @@ import           Utils
 import           Types
 
 main :: IO ()
-main = quickHttpServe site
+main =
+  do
+    reconfigureDhcpd
+    quickHttpServe site
 
 site :: Snap ()
 site =
@@ -66,6 +69,7 @@ updateHostIP =
     host <- requireInt "host_id"
     ip <- requireInt "ip_address"
     makeJSONHandler $ updateHostIPQuery host ip
+    liftIO reconfigureDhcpd
 
 unassignHostProfile :: Snap ()
 unassignHostProfile =
@@ -78,6 +82,7 @@ unassignHostIP =
   do
     host <- requireInt "host_id"
     makeJSONHandler $ unassignHostIPQuery host
+    liftIO reconfigureDhcpd
 
 createProfile :: Snap ()
 createProfile =
