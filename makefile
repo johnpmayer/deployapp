@@ -1,10 +1,10 @@
 
-GHC_OPTIONS="-outputdir tmp"
+GHC_OPTIONS="-outputdir tmp -threaded"
 GHC=ghc ${GHC_OPTIONS}
 
 all: deployapp
 
-deployapp: tmp log DeployApp.hs Queries.hs Types.hs Utils.hs
+deployapp: tmp log *.hs
 	${GHC} --make DeployApp.hs -o deployapp
 
 log:

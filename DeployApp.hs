@@ -14,6 +14,7 @@ import           Snap.Core
 import           Snap.Util.FileServe
 import           Snap.Http.Server
 
+import           DhcpdConfig
 import           Queries
 import           Utils
 import           Types
