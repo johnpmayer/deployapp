@@ -7,10 +7,13 @@ module Queries where
 import Control.Applicative
 
 import Data.List
+import Data.Maybe
 
+{-
 import Database.HDBC
 import Database.HDBC.ODBC
 import Database.MetaHDBC
+-}
 
 import Types
 import Utils
@@ -44,22 +47,6 @@ reportHostIPQuery host ip =
              , "set last_reported_ip = ?ip"
              , "where id = ?host"
              ])
-
-{-
-availableIPsQuery :: IO [Int]
-availableIPsQuery =
-  do
-    runQuery $(compileQuery $ unlines
-             [ "select oct from deployapp.octal"
-             , "where oct between 3 and 99"
-             , "and not exists "
-             , "("
-             , "  select ip_address"
-             , "  from deployapp.host"
-             , "  where ip_address = oct"
-             , ")"
-             ])
--}
 
 hostsQuery :: IO [Host]
 hostsQuery = 
@@ -176,45 +163,48 @@ diskPartitionsQuery disk =
               , "  id"
               , ", partition_number"
               , ", partition_type"
+              , ", mount_point"
               , ", size_in_mb"
               , "from disk_partition"
               , "where disk_id = ?disk;"
               ])
     
 
-newPrimaryPartitionQuery :: Int -> Int -> Int -> IO Integer
-newPrimaryPartitionQuery disk number size =
+newPrimaryPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
+newPrimaryPartitionQuery disk number mount size =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
+              , ", mount_point"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
-              , ") values (?disk, ?number, ?number"
+              , ") values (?disk, ?number, ?number, ?mount"
               , "         , ?size, null, null);"
               ])
     
     
-newExtendedPartitionQuery :: Int -> Int -> Int -> IO Integer
-newExtendedPartitionQuery disk number size =
+newExtendedPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
+newExtendedPartitionQuery disk number mount size =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
+              , ", mount_point"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
-              , ") values (?disk, ?number, 0, ?size, null, null);"
+              , ") values (?disk, ?number, 0, ?mount, ?size, null, null);"
               ])
     
     
-newLogicalPartitionQuery :: Int -> Int -> Int -> IO Integer
-newLogicalPartitionQuery disk number size =
+newLogicalPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
+newLogicalPartitionQuery disk number mount size =
   do
     let parttype = number
     let (expartn, expartt) = if number==5 
@@ -225,12 +215,13 @@ newLogicalPartitionQuery disk number size =
               , "( disk_id"
               , ", partition_number"
               , ", partition_type"
+              , ", mount_point"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
               , ")"
               , "values"
-              , "( ?disk, ?number, ?number, ?size"
+              , "( ?disk, ?number, ?number, ?mount, ?size"
               , ", max(?expartn,"
               , "      (select dp.partition_number"    
               , "      from disk_partition dp"
@@ -249,24 +240,26 @@ deletePartitionQuery partitionid =
               , "where id = ?partitionid"
               ])
 
-dropMaybe4 :: [(Maybe a, Maybe b, Maybe c, Maybe d)] -> [(a,b,c,d)]
-dropMaybe4 [] = []
-dropMaybe4 ((Just a, Just b, Just c, Just d):t) 
-           = (a,b,c,d) : dropMaybe4 t
+dropMaybe4 :: (Maybe a, Maybe b, Maybe c, Maybe d) -> Maybe (a,b,c,d)
+dropMaybe4 (Just a, Just b, Just c, Just d) = Just (a,b,c,d)
+dropMaybe4 _                                = Nothing
+
 
 fdiskQuery :: Int -> IO [Partition]
 fdiskQuery host =
   do
     results <- runQuery $(compileQuery $ unlines
         [ "select"
-        , "p.id, p.partition_number, p.partition_type, p.size_in_mb"
-        , "from host h"
-        , "left outer join profile f on h.profile_id = f.id"
-        , "left outer join disk d on f.disk_id = d.id"
-        , "left outer join disk_partition p on d.id = p.disk_id"
+        , "  p.id"
+        , ", p.partition_number"
+        , ", p.partition_type"
+        , ", p.mount_point"
+        , ", p.size_in_mb"
+        , "from disk_partition p"
+        , "inner join disk    d on d.id         = p.disk_id"
+        , "inner join profile f on f.disk_id    = d.id"
+        , "inner join host    h on h.profile_id = f.id"
         , "where h.id = ?host;"
---        , "order by p.partition_number"
         ])
-    let goodResults = dropMaybe4 results
-    return . sort $ map partitionFromTuple goodResults
+    return . sort . map partitionFromTuple $ results
 

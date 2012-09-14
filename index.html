@@ -185,6 +185,7 @@
                         <th>Add/Remove</th>
                         <th>Partition Number</th>
                         <th>Partition Type</th>
+                        <th>Mount Point</th>
                         <th>Size in Mb</th>
                       </tr>
                     </thead>
@@ -206,6 +207,11 @@
                         </td>
                         <td>
                           <input
+                             ng-model="new_partition.mount"
+                             required="" />
+                        </td>
+                        <td>
+                          <input
                              ng-model="new_partition.size" 
                              required=""/>
                         </td>
@@ -216,20 +222,9 @@
                         <td>
                           <a ng-click="delete_partition()">X</a>
                         </td>
-                        <td>
-                          <b>
-                            {{ partition.number }}
-                          </b>
-                        </td>
-                        <td>
-                          {{ from_type_id(partition.type) }}
-                          <!--
-                              <select
-                                 ng-model="selection"
-                                 ng-change="update_type()"
-                                 ng-options="type for type in types" />
-                              -->
-                        </td>
+                        <td>{{ partition.number }}</td>
+                        <td>{{ from_type_id(partition.type) }}</td>
+                        <td>{{ partition.mount_point }}</td>
                         <td>{{ partition.size_in_mb }}</td>
                       </tr>
                       

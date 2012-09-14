@@ -1,0 +1,10 @@
+
+file=known_hosts.tmp
+
+>$file
+
+for i in {3..199}
+do 
+    echo 192.168.1.$i ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5JXEaKdEX/fgXpvQo419l8HlteMU1R57/baD4+NXit8v6Pb3lKQhAxi3I7Dzqq8dEajIOMngLDI2Fn2wDUcjNH2+vVCqXnFyLPwLXfcT5wXHSkgJ+6H4bHqHQ45ZygVFN/BtClHklNyoMFydfHklYiQ8N3FYEz4mLK5FRGyDw3WEDRb+vZ/Ju2TyeAvhWNRuHa59bRRI7NNyrCfFprhgC/uLUUu3eBOhbHJWd2t9GREOYDFq4J97hESR65QMkroWduAIdlSlLhP3gus6R4QeBYIymLmVEIAKNjsYas9lmqyO03pM2+kZuQBD1BmK0ixTVjefNDPzp46lR7s8HZCRD >> $file
+
+done

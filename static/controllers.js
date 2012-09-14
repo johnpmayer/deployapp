@@ -400,6 +400,7 @@ function Partitions($scope, $http) {
                     { disk_id          : $scope.disk.id,
                       partition_number : $scope.new_partition.number,
                       partition_type   : $scope.new_partition.type,
+                      mount_point      : $scope.new_partition.mount,
                       size_in_mb       : $scope.new_partition.size }
                 ),
                 headers   : snap_form_headers}

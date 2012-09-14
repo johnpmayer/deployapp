@@ -62,26 +62,29 @@ instance ToJSON Disk where
            , "name" .= disk_name'
            ]
 
-data Partition = Partition { partition_id :: Int
+data Partition = Partition { partition_id     :: Int
                            , partition_number :: Int
-                           , partition_type :: Int
-                           , size_in_mb :: Int
+                           , partition_type   :: Int
+                           , mount_point      :: String
+                           , size_in_mb       :: Int
                            } deriving (Show, Eq, Ord)
 
-partitionFromTuple :: (Int, Int, Int, Int) -> Partition
+partitionFromTuple :: (Int, Int, Int, String, Int) -> Partition
 partitionFromTuple = uncurryN Partition
 
 instance ToJSON Partition where
   toJSON (Partition partition_id'
                     partition_number'
                     partition_type'
+                    mount_point'
                     size_in_mb') =
-    object [ "id"         .= partition_id'
-           , "number"     .= partition_number'
-           , "type"       .= partition_type'
-           , "size_in_mb" .= size_in_mb'
+    object [ "id"          .= partition_id'
+           , "number"      .= partition_number'
+           , "type"        .= partition_type'
+           , "mount_point" .= mount_point'
+           , "size_in_mb"  .= size_in_mb'
            ]
 
 fdiskEntry :: Partition -> String
-fdiskEntry (Partition _id number' type' size') =
+fdiskEntry (Partition _id number' type' _mount_point size') =
   concat . intersperse ":" . map show $ [number',type',size']

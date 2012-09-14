@@ -138,14 +138,15 @@ createPartition =
     disk <- requireInt "disk_id"
     number <- requireInt "partition_number"
     partition_type' <- requireString "partition_type"
+    mount <- requireString "mount_point"
     size <- requireInt "size_in_mb"
     case partition_type' of
       "Primary"  -> makeJSONHandler $ 
-                    newPrimaryPartitionQuery  disk number size
+                    newPrimaryPartitionQuery  disk number mount size
       "Extended" -> makeJSONHandler $ 
-                    newExtendedPartitionQuery disk number size
+                    newExtendedPartitionQuery disk number mount size
       "Logical"  -> makeJSONHandler $ 
-                    newLogicalPartitionQuery  disk number size
+                    newLogicalPartitionQuery  disk number mount size
       _          -> pass
 
 deletePartition :: Snap ()
