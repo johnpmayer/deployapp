@@ -19,8 +19,8 @@
             <thead>
               <tr>
                 <th>Mac Address</th>
+                <th>IP Address</th>
                 <th>Profile</th>
-                <th></th>
                 <th>Reboot</th>
               <tr>
             </thead>
@@ -30,20 +30,30 @@
                   ng-repeat="host in hosts | orderBy:hostOrderProp">
                 <td>{{ host.hw_address }}</td>
                 <td>
-                  <b>
-                    {{ host.profile_name }}
-                  </b>                    
-                  <a ng-click="unassign_host_profile()">(unassign)</a>
+                  <b>{{ show_ip(host.ip_address) }}</b>
+                  <a ng-click="unassign_host_ip()"
+                     ng-show="host.ip_address > 0">
+                    (unassign)
+                  </a>
+                  <select
+                     ng-show="host.ip_address < 0"
+                     ng-model="host.new_ip"
+                     ng-change="update_host_ip()"
+                     ng-options="show_ip(ip) for ip in ips">
+                  </select>
                 </td>
                 <td>
-                  Update                  
+                  <b>{{ profile_lookup[host.profile_id] }}</b>
+                  <a ng-click="unassign_host_profile()"
+                     ng-show="host.profile_id > 0">
+                    (unassign)
+                  </a>
                   <select
+                     ng-show="host.profile_id < 0"
                      ng-model="host.new_profile"
                      ng-change="update_host_profile()"
-                     ng-options="profile.name for profile in profiles"
-                     ></select>
-
-
+                     ng-options="profile.name for profile in profiles">
+                  </select>
                 </td>
                 <td><a ng-click="reboot_host()">Reboot</a></td>
               </tr>

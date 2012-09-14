@@ -11,19 +11,21 @@ import Data.Tuple.Curry
 
 data Host = Host { host_id :: Int
                  , hw_address :: String
+                 , ip_address :: Maybe Int
                  , host_profile_id :: Maybe Int
-                 , host_profile_name :: Maybe String
+--                 , host_profile_name :: Maybe String
                  } deriving (Show)
 
-hostFromTuple :: (Int, String, Maybe Int, Maybe String) -> Host
+hostFromTuple :: (Int, String, Maybe Int, Maybe Int) -> Host
 hostFromTuple = uncurryN Host
 
 instance ToJSON Host where
-  toJSON (Host host_id' hw_address' host_profile_id' host_profile_name') = 
+  toJSON (Host host_id' hw_address' ip_address' host_profile_id') = 
     object [ "id"           .= host_id'
            , "hw_address"   .= hw_address'
+           , "ip_address"   .= fromMaybe (-1) ip_address'
            , "profile_id"   .= fromMaybe (-1) host_profile_id'
-           , "profile_name" .= fromMaybe "unassigned" host_profile_name'
+--           , "profile_name" .= fromMaybe "unassigned" host_profile_name'
            ]
 
 data Profile = Profile { profile_id :: Int

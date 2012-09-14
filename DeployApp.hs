@@ -29,6 +29,10 @@ site =
     route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
           , ("app/host/profile", method POST updateHostProfile <|>
                                  method DELETE unassignHostProfile)
+          , ("app/host/ip", method POST   updateHostIP <|>
+                            method DELETE unassignHostIP)
+
+--          , ("app/ips", method GET $ makeJSONHandler availableIPsQuery)
 
           , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
           , ("app/profile", method PUT createProfile <|>
@@ -56,11 +60,24 @@ updateHostProfile =
     profile <- requireInt "profile_id"
     makeJSONHandler $ updateHostProfileQuery host profile
 
+updateHostIP :: Snap ()
+updateHostIP =
+  do
+    host <- requireInt "host_id"
+    ip <- requireInt "ip_address"
+    makeJSONHandler $ updateHostIPQuery host ip
+
 unassignHostProfile :: Snap ()
 unassignHostProfile =
   do
     host <- requireInt "host_id"
     makeJSONHandler $ unassignHostProfileQuery host
+
+unassignHostIP :: Snap ()
+unassignHostIP =
+  do
+    host <- requireInt "host_id"
+    makeJSONHandler $ unassignHostIPQuery host
 
 createProfile :: Snap ()
 createProfile =

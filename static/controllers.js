@@ -35,6 +35,9 @@ function Deploy($scope, $http) {
     $scope.profile_lookup = {}
     
     $scope.reload_profiles = function() {
+        
+        $scope.profile_lookup[-1] = 'unassigned';
+        
         $http.get('app/profiles')
             .success(function(data) {
                 $scope.profiles = data;
@@ -42,13 +45,21 @@ function Deploy($scope, $http) {
                 for (var index in $scope.profiles) {
                     
                     var profile = $scope.profiles[index];
-                    $scope.profile_lookup[profile.name] = profile.id;
-
+                    $scope.profile_lookup[profile.id] = profile.name;
+                    
                 }
                 
             }).error(copout);
     }
+        
+    $scope.reload_ips = function() {
+        $scope.ips = [];
+        for (var i = 3; i <= 99; i += 1) {
+            $scope.ips.push(i)
+        }
+    }
     
+    $scope.reload_ips();
     
 }
 
@@ -69,10 +80,10 @@ function Host($scope, $http) {
 
     $scope.update_host_profile = function() {
         
-        alert('Changing host (id=' + $scope.host.id + '):' +
-              $scope.host.hw_address +
-              ' to profile:  ' + $scope.host.new_profile.id +
-              ':' + $scope.host.new_profile.name + '!');
+        //alert('Changing host (id=' + $scope.host.id + '):' +
+        //$scope.host.hw_address +
+        //' to profile:  ' + $scope.host.new_profile.id +
+        //':' + $scope.host.new_profile.name + '!');
         
         var host_id = $scope.host.id;
         var profile_id = $scope.host.new_profile.id;
@@ -85,17 +96,48 @@ function Host($scope, $http) {
                 data          : data,
                 headers       : snap_form_headers }
               ).success(function(data) {
-                  alert(data);
+                  //alert(data);
                   $scope.reload_hosts()
               }).error(copout);
         
     }
     
+    $scope.update_host_ip = function() {
+        
+        alert('changing host ip to ' + $scope.show_ip($scope.host.new_ip));
+        
+        var host_id = $scope.host.id;
+        var ip_address = $scope.host.new_ip;
+        
+        var data = $.param({ host_id    : host_id,
+                             ip_address : ip_address });
+        
+        $http({ method         : 'POST',
+                url            : 'app/host/ip',
+                data           : data,
+                headers        : snap_form_headers }
+             ).success(function(data) {
+                 alert(data);
+                 $scope.reload_hosts();
+             }).error(copout);
+        
+    }
+    
+    $scope.show_ip = function(subnet_ip) {
+
+        if (subnet_ip > 0) {
+            return '192.168.1.' + subnet_ip;
+        } 
+        
+        return 'unassigned';
+
+    }
+    
     $scope.unassign_host_profile = function() {
         
-        alert('Unassigning host (id=' + $scope.host.id + '):' +
-              $scope.host.hw_address +
-              ' profile:  ');
+        //alert('Unassigning host (id=' + $scope.host.id + '):' +
+        //$scope.host.hw_address +
+        //' profile:  ');
         
         var host_id = $scope.host.id;
         
@@ -106,12 +148,32 @@ function Host($scope, $http) {
                 data          : data,
                 headers       : snap_form_headers }
               ).success(function(data) {
-                  alert(data);
+                  //alert(data);
+                  $scope.reload_hosts()
+              }).error(copout);
+        
+    }
+    
+    $scope.unassign_host_ip = function() {
+        
+        //alert('Unassigning host ip (id=' + $scope.host.id + ')');
+        
+        var host_id = $scope.host.id;
+        
+        var data = $.param({ host_id    : host_id });
+
+        $http({ method        : 'DELETE',
+                url           : 'app/host/ip',
+                data          : data,
+                headers       : snap_form_headers }
+              ).success(function(data) {
+                  //alert(data);
                   $scope.reload_hosts()
               }).error(copout);
         
     }
 
+    
 }
 
 function Profiles($scope, $http) {

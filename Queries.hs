@@ -35,20 +35,36 @@ registerHostQuery mac =
               , "(hw_address, profile_id)"
               , "values (?mac, null);"
               ])
-    
+
+{-
+availableIPsQuery :: IO [Int]
+availableIPsQuery =
+  do
+    runQuery $(compileQuery $ unlines
+             [ "select oct from deployapp.octal"
+             , "where oct between 3 and 99"
+             , "and not exists "
+             , "("
+             , "  select ip_address"
+             , "  from deployapp.host"
+             , "  where ip_address = oct"
+             , ")"
+             ])
+-}
 
 hostsQuery :: IO [Host]
 hostsQuery = 
   do    
     map hostFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
-              , "  h.id"
-              , ", h.hw_address"
-              , ", p.id"
-              , ", p.name"
+              , "  id"
+              , ", hw_address"
+              , ", ip_address"
+              , ", profile_id"
+--              , ", p.name"
               , "from host h"
-              , "left outer join profile p"
-              , "on h.profile_id = p.id;"
+--              , "left outer join profile p"
+--              , "on h.profile_id = p.id;"
               ])
     
 
@@ -60,7 +76,15 @@ updateHostProfileQuery host profile =
               , "set profile_id = ?profile"
               , "where id = ?host;"
               ])
-    
+
+updateHostIPQuery :: Int -> Int -> IO Integer
+updateHostIPQuery host ip =
+  do
+    runQuery $(compileQuery $ unlines
+              [ "update host"
+              , "set ip_address = ?ip"
+              , "where id = ?host;"
+              ])
 
 unassignHostProfileQuery :: Int -> IO Integer
 unassignHostProfileQuery host =
@@ -70,7 +94,15 @@ unassignHostProfileQuery host =
               , "set profile_id = null"
               , "where id = ?host;"
               ])
-    
+
+unassignHostIPQuery :: Int -> IO Integer
+unassignHostIPQuery host =
+  do
+    runQuery $(compileQuery $ unlines
+              [ "update host"
+              , "set ip_address = null"
+              , "where id = ?host;"
+              ])    
 
 profilesQuery :: IO [Profile]
 profilesQuery = 
@@ -191,11 +223,13 @@ newLogicalPartitionQuery disk number size =
               , ")"
               , "values"
               , "( ?disk, ?number, ?number, ?size"
-              , ", max(?expartn,(select dp.partition_number"    
-              , "  from disk_partition dp"
-              , "  where dp.disk_id = ?disk"
-              , "  and dp.partition_type = 0))"
-              , ", ?expartt);" 
+              , ", max(?expartn,"
+              , "      (select dp.partition_number"    
+              , "      from disk_partition dp"
+              , "      where dp.disk_id = ?disk"
+              , "      and dp.partition_type = 0))"
+              , ", ?expartt"
+              , ");" 
               ])
     
 
