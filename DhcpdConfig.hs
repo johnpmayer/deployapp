@@ -5,6 +5,7 @@
 module DhcpdConfig where
 
 import qualified Data.ByteString.Lazy.Char8 as B
+import           Data.Maybe
 
 import System.Process
 
@@ -45,27 +46,26 @@ rewriteDhcpdConfig =
   do
     base <- B.readFile dhcpdBaseConfig
     hosts <- hostsQuery
-    let leased_hosts = filter (\h -> ip_address h /= Nothing) hosts
-    let entries = map entryFromHost leased_hosts
+    let entries = catMaybes $ map entryFromHost hosts
     let output = B.concat (base : map formatEntry entries)
     B.writeFile dhcpdConfig output
 
-data Entry = Entry { hw_address :: String
-                   , leased_ip_address :: Maybe Int 
+data Entry = Entry { hw_ethernet :: String
+                   , fixed_address :: Int
                    }
 
 formatEntry :: Entry -> B.ByteString
-formatEntry (Entry hw_address' ip_address') =
-  B.pack $ case ip_address' of
-    Nothing -> ""
-    Just lease -> unlines $ 
-         [ concat ["host ", filter (/=':') hw_address', " {"]
-         , concat ["  hardware ethernet ", hw_address', ";"]
-         , concat ["  fixed-address 192.168.1.", show lease, ";"]
+formatEntry (Entry hw_ethernet' fixed_address') =
+  B.pack . unlines $ 
+         [ concat ["host ", filter (/=':') hw_ethernet', " {"]
+         , concat ["  hardware ethernet ", hw_ethernet', ";"]
+         , concat ["  fixed-address 192.168.1.", show fixed_address', ";"]
          , "}"
          , "" 
          ]
 
-entryFromHost :: Host -> Entry
-entryFromHost (Host _id hw_address' ip_address' _profid) =
-  Entry hw_address' ip_address'
+entryFromHost :: Host -> Maybe Entry
+entryFromHost host = do
+  fixed_address' <- ip_assignment host -- auto failthrough
+  let hw_ethernet' = hw_address host
+  return $ Entry hw_ethernet' fixed_address'

@@ -104,7 +104,7 @@ function Host($scope, $http) {
     
     $scope.update_host_ip = function() {
         
-        alert('changing host ip to ' + $scope.show_ip($scope.host.new_ip));
+        //alert('changing host ip to ' + $scope.show_ip($scope.host.new_ip));
         
         var host_id = $scope.host.id;
         var ip_address = $scope.host.new_ip;
@@ -117,7 +117,7 @@ function Host($scope, $http) {
                 data           : data,
                 headers        : snap_form_headers }
              ).success(function(data) {
-                 alert(data);
+                 //alert(data);
                  $scope.reload_hosts();
              }).error(copout);
         
@@ -138,12 +138,12 @@ function Host($scope, $http) {
     
     $scope.ping_host = function() {
         
-        alert('pinging host ip ' + $scope.show_ip($scope.host.ip_address))
+        //alert('pinging host ip ' + $scope.show_ip($scope.host.last_reported_ip))
         
         $scope.host.ping.in_progress = true;
 
         var host_id = $scope.host.id; // ToDo currently unused by app
-        var ip_address = $scope.host.ip_address;
+        var ip_address = $scope.host.last_reported_ip;
         
         var data = $.param({ host_id    : host_id,
                              ip_address : ip_address });
@@ -153,7 +153,7 @@ function Host($scope, $http) {
                 data           : data,
                 headers        : snap_form_headers }
              ).success(function(data) {
-                 alert(data);
+                 //alert(data);
                  $scope.host.ping.in_progress = false;
                  var resp = data;
                  if (resp == 0) {
@@ -161,7 +161,10 @@ function Host($scope, $http) {
                  } else {
                      $scope.host.ping.response = "Failed";
                  }
-             }).error(copout);
+             }).error(function() {
+                 $scope.host.ping.in_progress = false;                 
+                 copout()
+             });
         
     }
     

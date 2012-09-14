@@ -53,6 +53,7 @@ site =
 
           , ("core/check/:mac", method GET checkHost)
           , ("core/register/:mac", method GET registerHost)
+          , ("core/report/:host_id/:ip", method GET reportHostIP)
           , ("core/fdisk/:host_id", method GET fdisk)
           ]
 
@@ -159,6 +160,13 @@ registerHost =
   do
     mac <- requireString "mac"
     makeJSONHandler $ registerHostQuery mac
+
+reportHostIP :: Snap ()
+reportHostIP =
+  do
+    host_id' <- requireInt "host_id"
+    host_ip' <- requireInt "ip"
+    makeJSONHandler $ reportHostIPQuery host_id' host_ip'
 
 fdisk :: Snap ()
 fdisk = 

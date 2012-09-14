@@ -19,7 +19,8 @@
             <thead>
               <tr>
                 <th>Mac Address</th>
-                <th>IP Address</th>
+                <th>Reported IP</th>
+                <th>DHCP Assignment</th>
                 <th>Profile</th>
                 <th>Reboot</th>
               <tr>
@@ -28,15 +29,13 @@
               
               <tr ng-controller="Host"
                   ng-repeat="host in hosts | orderBy:hostOrderProp">
+
                 <td>{{ host.hw_address }}</td>
+                
                 <td>
-                  <b>{{ show_ip(host.ip_address) }}</b>
-                  <a ng-click="unassign_host_ip()"
-                     ng-show="host.ip_address > 0">
-                    (unassign)
-                  </a>
+                  {{ show_ip(host.last_reported_ip) }}
                   <a ng-click="ping_host()"
-                     ng-show="host.ip_address > 0 && !host.ping.in_progress">
+                     ng-show="host.last_reported_ip > 0 && !host.ping.in_progress">
                     (ping
                     <span ng-show="host.ping.response != undefined">
                       {{ host.ping.response }}
@@ -46,13 +45,22 @@
                   <span ng-show="host.ping.in_progress">
                     Pinging...
                   </span>
+                </td>
+                
+                <td>
+                  <b>{{ show_ip(host.ip_assignment) }}</b>
+                  <a ng-click="unassign_host_ip()"
+                     ng-show="host.ip_assignment > 0">
+                    (unassign)
+                  </a>
                   <select
-                     ng-show="host.ip_address < 0"
+                     ng-show="host.ip_assignment < 0"
                      ng-model="host.new_ip"
                      ng-change="update_host_ip()"
                      ng-options="show_ip(ip) for ip in ips">
                   </select>
                 </td>
+                
                 <td>
                   <b>{{ profile_lookup[host.profile_id] }}</b>
                   <a ng-click="unassign_host_profile()"
@@ -66,7 +74,9 @@
                      ng-options="profile.name for profile in profiles">
                   </select>
                 </td>
+                
                 <td><a ng-click="reboot_host()">Reboot</a></td>
+                
               </tr>
               
             </tbody>

@@ -36,6 +36,15 @@ registerHostQuery mac =
               , "values (?mac, null);"
               ])
 
+reportHostIPQuery :: Int -> Int -> IO Integer
+reportHostIPQuery host ip =
+  do
+    runQuery $(compileQuery $ unlines
+             [ "update host"
+             , "set last_reported_ip = ?ip"
+             , "where id = ?host"
+             ])
+
 {-
 availableIPsQuery :: IO [Int]
 availableIPsQuery =
@@ -57,14 +66,14 @@ hostsQuery =
   do    
     map hostFromTuple <$> runQuery $(compileQuery $ unlines
               [ "select"
-              , "  id"
-              , ", hw_address"
-              , ", ip_address"
-              , ", profile_id"
---              , ", p.name"
+              , "  h.id"
+              , ", h.hw_address"
+              , ", h.profile_id"
+              , ", last_reported_ip"
+              , ", d.ip_assignment"
               , "from host h"
---              , "left outer join profile p"
---              , "on h.profile_id = p.id;"
+              , "left outer join dhcp_entry d"
+              , "on h.id = d.host_id;"
               ])
     
 
@@ -81,9 +90,9 @@ updateHostIPQuery :: Int -> Int -> IO Integer
 updateHostIPQuery host ip =
   do
     runQuery $(compileQuery $ unlines
-              [ "update host"
-              , "set ip_address = ?ip"
-              , "where id = ?host;"
+              [ "insert into dhcp_entry"
+              , "(host_id, ip_assignment)"
+              , "values (?host, ?ip);"
               ])
 
 unassignHostProfileQuery :: Int -> IO Integer
@@ -99,9 +108,8 @@ unassignHostIPQuery :: Int -> IO Integer
 unassignHostIPQuery host =
   do
     runQuery $(compileQuery $ unlines
-              [ "update host"
-              , "set ip_address = null"
-              , "where id = ?host;"
+              [ "delete dhcp_entry"
+              , "where host_id = ?host;"
               ])    
 
 profilesQuery :: IO [Profile]
