@@ -1,0 +1,5 @@
+PROMPT 0
+DEFAULT local
+TIMEOUT 50
+label local
+	LOCALBOOT 0

@@ -1,0 +1,11 @@
+default vesamenu.c32
+prompt 0
+timeout 1
+
+display boot.msg
+
+label msbootnix
+  menu label MSBootnix automatic profile installation
+  menu default
+  kernel vmlinuz
+  append initrd=core.gz
