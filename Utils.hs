@@ -17,6 +17,9 @@ import           Language.Haskell.TH
 
 import           Snap.Core
 
+import           System.Exit
+import           System.Process
+
 -- project modules
 
 --import Config
@@ -82,3 +85,12 @@ safeRead maybe_s =
       [(x, "")] -> return x
       _ -> mzero
 
+simpleRunProcess :: CreateProcess -> IO ExitCode
+simpleRunProcess cmd = 
+  do
+    (_stdin, _stdout, _stderr, pid) <- createProcess cmd
+    waitForProcess pid
+
+getExitCode :: ExitCode -> Int
+getExitCode ExitSuccess = 0
+getExitCode (ExitFailure i) = i

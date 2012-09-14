@@ -16,8 +16,9 @@ import           Snap.Http.Server
 
 import           DhcpdConfig
 import           Queries
-import           Utils
+import           RemoteHost
 import           Types
+import           Utils
 
 main :: IO ()
 main =
@@ -34,6 +35,7 @@ site =
                                  method DELETE unassignHostProfile)
           , ("app/host/ip", method POST   updateHostIP <|>
                             method DELETE unassignHostIP)
+          , ("app/host/ping", method POST pingHostIP)
 
 --          , ("app/ips", method GET $ makeJSONHandler availableIPsQuery)
 
@@ -83,6 +85,12 @@ unassignHostIP =
     host <- requireInt "host_id"
     makeJSONHandler $ unassignHostIPQuery host
     liftIO reconfigureDhcpd
+
+pingHostIP :: Snap ()
+pingHostIP =
+  do
+    ip <- requireInt "ip_address"
+    makeJSONHandler $ pingHost ip
 
 createProfile :: Snap ()
 createProfile =

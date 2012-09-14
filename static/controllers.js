@@ -133,6 +133,38 @@ function Host($scope, $http) {
 
     }
     
+    $scope.host.ping = { in_progress : false,
+                         response    : undefined }
+    
+    $scope.ping_host = function() {
+        
+        alert('pinging host ip ' + $scope.show_ip($scope.host.ip_address))
+        
+        $scope.host.ping.in_progress = true;
+
+        var host_id = $scope.host.id; // ToDo currently unused by app
+        var ip_address = $scope.host.ip_address;
+        
+        var data = $.param({ host_id    : host_id,
+                             ip_address : ip_address });
+        
+        $http({ method         : 'POST',
+                url            : 'app/host/ping',
+                data           : data,
+                headers        : snap_form_headers }
+             ).success(function(data) {
+                 alert(data);
+                 $scope.host.ping.in_progress = false;
+                 var resp = data;
+                 if (resp == 0) {
+                     $scope.host.ping.response = "OK";
+                 } else {
+                     $scope.host.ping.response = "Failed";
+                 }
+             }).error(copout);
+        
+    }
+    
     $scope.unassign_host_profile = function() {
         
         //alert('Unassigning host (id=' + $scope.host.id + '):' +

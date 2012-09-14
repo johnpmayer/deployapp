@@ -6,11 +6,11 @@ module DhcpdConfig where
 
 import qualified Data.ByteString.Lazy.Char8 as B
 
-import System.Exit
 import System.Process
 
 import Queries 
 import Types
+import Utils
 
 dhcpDir :: FilePath
 dhcpDir = "/etc/dhcp/"
@@ -36,10 +36,8 @@ statusCommand = shell "systemctl status dhcpd.service; cat /etc/dhcp/dhcpd.conf"
 restartDhcpd :: IO ()
 restartDhcpd =
   do
-    (_stdin, _stdout, _stderr, pid1) <- createProcess restartCommand
-    _ <- waitForProcess pid1
-    (_stdin, _stdout, _stderr, pid2) <- createProcess statusCommand
-    _ <- waitForProcess pid2
+    _restartCode <- simpleRunProcess restartCommand
+    _statusCode <- simpleRunProcess statusCommand
     return ()
 
 rewriteDhcpdConfig :: IO ()

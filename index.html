@@ -35,6 +35,17 @@
                      ng-show="host.ip_address > 0">
                     (unassign)
                   </a>
+                  <a ng-click="ping_host()"
+                     ng-show="host.ip_address > 0 && !host.ping.in_progress">
+                    (ping
+                    <span ng-show="host.ping.response != undefined">
+                      {{ host.ping.response }}
+                    </span>
+                    )
+                  </a>
+                  <span ng-show="host.ping.in_progress">
+                    Pinging...
+                  </span>
                   <select
                      ng-show="host.ip_address < 0"
                      ng-model="host.new_ip"
