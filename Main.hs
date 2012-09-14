@@ -36,6 +36,7 @@ site =
           , ("app/host/ip", method POST   updateHostIP <|>
                             method DELETE unassignHostIP)
           , ("app/host/ping", method POST pingHostIP)
+          , ("app/host/reboot", method POST $ rebootHost)
 
 --          , ("app/ips", method GET $ makeJSONHandler availableIPsQuery)
 
@@ -92,6 +93,12 @@ pingHostIP =
   do
     ip <- requireInt "ip_address"
     makeJSONHandler $ pingHost ip
+
+rebootHost :: Snap ()
+rebootHost =
+  do
+    ip <- requireInt "ip_address"
+    makeJSONHandler $ runRebootHost ip
 
 createProfile :: Snap ()
 createProfile =

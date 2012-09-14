@@ -85,11 +85,12 @@ safeRead maybe_s =
       [(x, "")] -> return x
       _ -> mzero
 
-simpleRunProcess :: CreateProcess -> IO ExitCode
+simpleRunProcess :: CreateProcess -> IO Int
 simpleRunProcess cmd = 
   do
     (_stdin, _stdout, _stderr, pid) <- createProcess cmd
-    waitForProcess pid
+    code <- waitForProcess pid
+    return $ getExitCode code
 
 getExitCode :: ExitCode -> Int
 getExitCode ExitSuccess = 0

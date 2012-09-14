@@ -158,11 +158,42 @@ function Host($scope, $http) {
                  var resp = data;
                  if (resp == 0) {
                      $scope.host.ping.response = "OK";
+                     $scope.host.reboot.in_progress = false;
                  } else {
                      $scope.host.ping.response = "Failed";
                  }
              }).error(function() {
-                 $scope.host.ping.in_progress = false;                 
+                 $scope.host.ping.in_progress = false;
+                 copout()
+             });
+        
+    }
+    
+    $scope.ping_host();
+    
+    $scope.host.reboot = { in_progress : false }
+    
+    $scope.reboot_host = function() {
+        
+//        $scope.host.reboot.in_progress = true;
+
+        var host_id = $scope.host.id; // ToDo currently unused by app
+        var ip_address = $scope.host.last_reported_ip;
+        
+        var data = $.param({ host_id    : host_id,
+                             ip_address : ip_address });
+        
+        $http({ method         : 'POST',
+                url            : 'app/host/reboot',
+                data           : data,
+                headers        : snap_form_headers }
+             ).success(function(data) {
+                 //alert(data);
+                 var resp = data;
+                 if (resp == 0) {
+                     $scope.host.reboot.in_progress = true;
+                 }
+             }).error(function() {
                  copout()
              });
         

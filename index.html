@@ -75,7 +75,15 @@
                   </select>
                 </td>
                 
-                <td><a ng-click="reboot_host()">Reboot</a></td>
+                <td>
+                  <a 
+                     ng-click="reboot_host()"
+                     ng-show="!host.reboot.in_progress">
+                    Reboot</a>
+                  <span ng-show="host.reboot.in_progress">
+                    Reboot in progress, ping to reset
+                  </span>
+                </td>
                 
               </tr>
               
