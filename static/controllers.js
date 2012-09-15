@@ -169,7 +169,7 @@ function Host($scope, $http) {
         
     }
     
-    $scope.ping_host();
+    //$scope.ping_host(); this started to get ridiculous
     
     $scope.host.reboot = { in_progress : false }
     
