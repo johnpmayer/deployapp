@@ -4,7 +4,28 @@
 #   see dhcpd.conf(5) man page
 #
 
-ddns-update-style none;
+ddns-update-style interim;
+ddns-domainname "assessment.infra.";
+ddns-rev-domainname "in-addr.arpa.";
+
+option domain-name "assessment.infra";
+option domain-name-servers 192.168.1.1;
+
+key router {
+	algorithm hmac-md5;
+	secret INXu/ospCjH2t0aESAsdmQ==;
+}
+
+zone assessment.infra {
+	primary 192.168.1.1;
+	key router;
+}
+
+zone 1.168.192.in-addr.arpa {
+	primary 192.168.1.1;
+	key router;
+}
+
 authoritative;
 
 subnet 192.168.1.0 netmask 255.255.255.0 {
@@ -12,10 +33,5 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
 	option routers 192.168.1.1;
 	filename "pxelinux.0";
 	next-server 192.168.1.1;
-}
-
-host database {
-	hardware ethernet 08:00:27:ED:E9:D8;
-	fixed-address 192.168.1.2;
 }
 

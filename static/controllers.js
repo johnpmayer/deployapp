@@ -10,7 +10,6 @@ var copout = function() {
 function Deploy($scope, $http) {
     
     $scope.disk_lookup = {}
-    $scope.disk_reverse_lookup = {}
     
     $scope.reload_disks = function() {
         $http.get('app/disks')
@@ -23,7 +22,6 @@ function Deploy($scope, $http) {
                     var disk = $scope.disks[index];
                     //alert("Disk: " + JSON.stringify(disk));
                     $scope.disk_lookup[disk.id] = disk.name;
-                    $scope.disk_reverse_lookup[disk.name] = disk.id;
                 }
                 
                 //alert("Lookup: " + 
@@ -31,6 +29,21 @@ function Deploy($scope, $http) {
                 
             }).error(copout);
     }
+    
+    // Load the images
+    $scope.image_lookup = {}
+    $scope.reload_images = function() {
+        $http.get('app/images')
+            .success(function(data) {
+                $scope.images = data;
+                for (var index in $scope.images) {
+                    var image = $scope.images[index];
+                    $scope.image_lookup[image.id] = image.name; 
+                    // ToDo ref the entire image
+                }
+            }).error(copout);
+    }
+    $scope.reload_images();
     
     $scope.profile_lookup = {}
     
@@ -250,13 +263,11 @@ function Profiles($scope, $http) {
     
     $scope.create_profile = function() {
         
-        var disk_id = 
-            $scope.disk_reverse_lookup[$scope.new_profile.disk.name];
-        
         var data = 
             $.param({ name : $scope.new_profile.name,
                       description : $scope.new_profile.description,
-                      disk_id : disk_id });
+                      disk_id : $scope.new_profile.disk.id,
+                      image_id : $scope.new_profile.image.id });
         
         $http({ method       : 'PUT',
                 url          : 'app/profile',
@@ -300,6 +311,20 @@ function Profile($scope, $http) {
              }).error(copout);
         
     }
+    
+}
+
+function Images($scope, $http) {
+    
+    $scope.reload_images = function() {
+        $http.get('app/images/')
+            .success(function(data) {
+                $scope.images = data;
+            }).error(copout);
+    };
+    
+    $scope.reload_images();
+    
     
 }
 
@@ -378,7 +403,7 @@ function Partitions($scope, $http) {
     $scope.types = [ "Primary", "Extended", "Logical" ];
     
     $scope.order_prop = "number";
-
+    
     $scope.calc_type_id = function() {
         if ($scope.new_partition.type === "Extended") {
             return 0;

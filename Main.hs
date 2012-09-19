@@ -6,7 +6,9 @@ module Main where
 
 import           Control.Applicative
 import           Control.Monad.IO.Class
+
 import qualified Data.ByteString.Lazy.Char8 as B
+import           Data.List
 
 --import           Data.Tuple.Sequence
 
@@ -28,35 +30,41 @@ main =
 
 site :: Snap ()
 site =
-    ifTop (serveFile "index.html") <|>
-    dir "static" (serveDirectory "static") <|>
-    route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
-          , ("app/host/profile", method POST updateHostProfile <|>
-                                 method DELETE unassignHostProfile)
-          , ("app/host/ip", method POST   updateHostIP <|>
-                            method DELETE unassignHostIP)
-          , ("app/host/ping", method POST pingHostIP)
-          , ("app/host/reboot", method POST $ rebootHost)
+     
+     ifTop (serveFile "index.html") <|>
+     dir "static" (serveDirectory "static") <|>
+     dir "images" (serveDirectory "images") <|>
 
---          , ("app/ips", method GET $ makeJSONHandler availableIPsQuery)
+     route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
+           , ("app/host/profile", method POST updateHostProfile <|>
+                                  method DELETE unassignHostProfile)
+           , ("app/host/ip", method POST   updateHostIP <|>
+                             method DELETE unassignHostIP)
+           , ("app/host/ping", method POST pingHostIP)
+           , ("app/host/reboot", method POST $ rebootHost)
+           
+           , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
+           , ("app/profile", method PUT createProfile <|>
+                             method DELETE deleteProfile)
 
-          , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
-          , ("app/profile", method PUT createProfile <|>
-                            method DELETE deleteProfile)
+           , ("app/images", method GET $ makeJSONHandler imagesQuery)
 
-          , ("app/disks", method GET $ makeJSONHandler disksQuery)
-          , ("app/disk", method PUT createDisk <|>
-                         method DELETE deleteDisk)
+           , ("app/softwares", method GET $ makeJSONHandler softwaresQuery)
+                             
+           , ("app/disks", method GET $ makeJSONHandler disksQuery)
+           , ("app/disk", method PUT createDisk <|>
+                          method DELETE deleteDisk)
 
-          , ("app/partitions/:disk_id", method GET getPartitions)
-          , ("app/partition", method PUT createPartition <|>
-                              method DELETE deletePartition)
+           , ("app/partitions/:disk_id", method GET getPartitions)
+           , ("app/partition", method PUT createPartition <|>
+                               method DELETE deletePartition)
 
-          , ("core/check/:mac", method GET checkHost)
-          , ("core/register/:mac", method GET registerHost)
-          , ("core/report/:host_id/:ip", method GET reportHostIP)
-          , ("core/fdisk/:host_id", method GET fdisk)
-          ]
+           , ("core/check/:mac", method GET checkHost)
+           , ("core/register/:mac", method GET registerHost)
+           , ("core/report/:host_id/:ip", method GET reportHostIP)
+           , ("core/fdisk/:host_id", method GET fdisk)
+           , ("core/fstab/:host_id", method GET fstab)
+           ]
 
 {- APP -}
 
@@ -106,7 +114,8 @@ createProfile =
     name <- requireString "name"
     desc <- requireString "description"
     disk <- requireInt "disk_id"
-    makeJSONHandler $ newProfileQuery name desc disk
+    image <- requireInt "image_id"
+    makeJSONHandler $ newProfileQuery name desc disk image
 
 deleteProfile :: Snap ()
 deleteProfile =
@@ -152,8 +161,8 @@ createPartition =
 deletePartition :: Snap ()
 deletePartition =
   do
-    partition <- requireInt "partition_id"
-    makeJSONHandler $ deletePartitionQuery partition
+    partition' <- requireInt "partition_id"
+    makeJSONHandler $ deletePartitionQuery partition'
 
 {- CORE -}
 
@@ -182,3 +191,14 @@ fdisk =
     host_id' <- requireInt "host_id"
     partitions <- liftIO $ fdiskQuery host_id'
     writeLBS . B.pack . unlines . map fdiskEntry $ partitions
+
+compareBy :: Ord b => (a -> b) -> a -> a -> Ordering
+compareBy f x y = compare (f x) (f y)
+
+fstab :: Snap ()
+fstab = 
+  do
+    host_id' <- requireInt "host_id"
+    partitions <- liftIO $ fdiskQuery host_id'
+    let mountOrderPartitions = sortBy (compareBy mount_point) partitions
+    writeLBS . B.pack . unlines . map fdiskEntry $ mountOrderPartitions

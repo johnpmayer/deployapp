@@ -8,6 +8,7 @@ import Control.Applicative
 
 import Data.List
 import Data.Maybe
+import Data.Tuple.Curry
 
 {-
 import Database.HDBC
@@ -51,12 +52,12 @@ reportHostIPQuery host ip =
 hostsQuery :: IO [Host]
 hostsQuery = 
   do    
-    map hostFromTuple <$> runQuery $(compileQuery $ unlines
+    map (uncurryN Host) <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  h.id"
               , ", h.hw_address"
               , ", h.profile_id"
-              , ", last_reported_ip"
+              , ", h.last_reported_ip"
               , ", d.ip_assignment"
               , "from host h"
               , "left outer join dhcp_entry d"
@@ -102,24 +103,25 @@ unassignHostIPQuery host =
 profilesQuery :: IO [Profile]
 profilesQuery = 
   do 
-    map profileFromTuple <$> runQuery $(compileQuery $ unlines
+    map (uncurryN Profile) <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  id"
               , ", name"
               , ", description"
               , ", disk_id"
+              , ", image_id"
               , "from profile;"
               ])
     
 
-newProfileQuery :: String -> String -> Int -> IO Integer
-newProfileQuery name desc disk =
+newProfileQuery :: String -> String -> Int -> Int -> IO Integer
+newProfileQuery name desc disk image =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into profile"
-              , "(name, description, disk_id)"
+              , "(name, description, disk_id, image_id)"
               , "values"
-              , "(?name, ?desc, ?disk);"
+              , "(?name, ?desc, ?disk, ?image);"
               ])
     
 
@@ -128,12 +130,21 @@ deleteProfileQuery profile =
   do
     runQuery $(compileQuery $
               "delete from profile where id = ?profile;")
-    
+
+imagesQuery :: IO [Image]
+imagesQuery = 
+  map (uncurryN Image) <$> runQuery $(compileQuery $
+                             "select id, name, archive_url from image")
+
+softwaresQuery :: IO [Software]
+softwaresQuery = 
+  map (uncurryN Software) <$> runQuery $(compileQuery $
+                     "select id, package_name from software")
 
 disksQuery :: IO [Disk]
 disksQuery =
   do
-    map diskFromTuple <$> runQuery $(compileQuery $ unlines
+    map (uncurryN Disk) <$> runQuery $(compileQuery $ unlines
               [ "select"
               ,  "  id"
               ,  ", name"
@@ -158,7 +169,7 @@ deleteDiskQuery disk =
 diskPartitionsQuery :: Int -> IO [Partition]
 diskPartitionsQuery disk =
   do
-    map partitionFromTuple <$> runQuery $(compileQuery $ unlines
+    map (uncurryN Partition) <$> runQuery $(compileQuery $ unlines
               [ "select"
               , "  id"
               , ", partition_number"
@@ -244,7 +255,6 @@ dropMaybe4 :: (Maybe a, Maybe b, Maybe c, Maybe d) -> Maybe (a,b,c,d)
 dropMaybe4 (Just a, Just b, Just c, Just d) = Just (a,b,c,d)
 dropMaybe4 _                                = Nothing
 
-
 fdiskQuery :: Int -> IO [Partition]
 fdiskQuery host =
   do
@@ -261,5 +271,4 @@ fdiskQuery host =
         , "inner join host    h on h.profile_id = f.id"
         , "where h.id = ?host;"
         ])
-    return . sort . map partitionFromTuple $ results
-
+    return . sort . map (uncurryN Partition) $ results
