@@ -1,0 +1,15 @@
+
+
+echo "rewriting /etc/resolv.conf"
+
+resolv=/etc/resolv.conf
+tmp=/tmp/resolv.conf
+
+>$tmp
+
+grep -v nameserver $resolv >>$tmp
+echo "nameserver 192.168.1.1" >>$tmp
+grep nameserver $resolv >>$tmp
+
+mv $tmp $resolv
+
