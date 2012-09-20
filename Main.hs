@@ -64,6 +64,7 @@ site =
            , ("core/report/:host_id/:ip", method GET reportHostIP)
            , ("core/fdisk/:host_id", method GET fdisk)
            , ("core/fstab/:host_id", method GET fstab)
+           , ("core/archive/:host_id", method GET archive)
            ]
 
 {- APP -}
@@ -202,3 +203,10 @@ fstab =
     partitions <- liftIO $ fdiskQuery host_id'
     let mountOrderPartitions = sortBy (compareBy mount_point) partitions
     writeLBS . B.pack . unlines . map fdiskEntry $ mountOrderPartitions
+
+archive :: Snap ()
+archive =
+  do
+    host_id' <- requireInt "host_id"
+    archive_url' <- requireOne $ archiveQuery host_id'
+    writeLBS . B.pack $ archive_url'

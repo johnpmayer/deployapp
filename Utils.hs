@@ -95,3 +95,11 @@ simpleRunProcess cmd =
 getExitCode :: ExitCode -> Int
 getExitCode ExitSuccess = 0
 getExitCode (ExitFailure i) = i
+
+requireOne :: IO [a] -> Snap a
+requireOne query =
+  do
+    results <- liftIO query
+    case results of
+      [x] -> return x
+      _   -> pass

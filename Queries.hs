@@ -272,3 +272,15 @@ fdiskQuery host =
         , "where h.id = ?host;"
         ])
     return . sort . map (uncurryN Partition) $ results
+
+archiveQuery :: Int -> IO [String]
+archiveQuery host =
+  do
+    runQuery $(compileQuery $ unlines
+            [ "select archive_url"
+            , "from image i"
+            , "inner join profile f on f.image_id   = i.id"
+            , "inner join host    h on h.profile_id = f.id"
+            , "where h.id = ?host;"
+            ])
+    
