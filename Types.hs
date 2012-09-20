@@ -81,6 +81,7 @@ data Partition = Partition { partition_id     :: Int
                            , partition_number :: Int
                            , partition_type   :: Int
                            , mount_point      :: String
+                           , is_boot          :: Int
                            , size_in_mb       :: Int
                            } deriving (Show, Eq, Ord)
 
@@ -89,14 +90,17 @@ instance ToJSON Partition where
                     partition_number'
                     partition_type'
                     mount_point'
+                    is_boot'
                     size_in_mb') =
     object [ "id"          .= partition_id'
            , "number"      .= partition_number'
            , "type"        .= partition_type'
            , "mount_point" .= mount_point'
+           , "is_boot"     .= is_boot'
            , "size_in_mb"  .= size_in_mb'
            ]
 
 fdiskEntry :: Partition -> String
-fdiskEntry (Partition _id number' type' mount_point' size') =
-  concat . intersperse ":" $ (map show [number',type',size']) ++ [mount_point']
+fdiskEntry (Partition _id number' type' mount_point' is_boot' size') =
+  concat . intersperse ":" $ (map show [number',type',size']) 
+                           ++ [mount_point'] ++ [show is_boot']

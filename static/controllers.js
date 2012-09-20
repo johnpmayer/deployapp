@@ -419,15 +419,19 @@ function Partitions($scope, $http) {
         //      + ';' + $scope.calc_type_id()
         //    + ';' + $scope.new_partition.size);
         
+        var data = $.param(
+            { disk_id          : $scope.disk.id,
+              partition_number : $scope.new_partition.number,
+              partition_type   : $scope.new_partition.type,
+              mount_point      : $scope.new_partition.mount,
+              is_boot          : ($scope.new_partition.is_boot ? 1 : 0),
+              size_in_mb       : $scope.new_partition.size 
+            }
+        );
+        
         $http({ method    : 'PUT',
                 url       : 'app/partition',
-                data      : $.param(
-                    { disk_id          : $scope.disk.id,
-                      partition_number : $scope.new_partition.number,
-                      partition_type   : $scope.new_partition.type,
-                      mount_point      : $scope.new_partition.mount,
-                      size_in_mb       : $scope.new_partition.size }
-                ),
+                data      : data,
                 headers   : snap_form_headers}
              ).success(function(data) {
                  //alert(data);

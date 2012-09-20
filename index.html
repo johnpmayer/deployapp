@@ -216,6 +216,7 @@
                         <th>Partition Number</th>
                         <th>Partition Type</th>
                         <th>Mount Point</th>
+                        <th>Boot Flag</th>
                         <th>Size in Mb</th>
                       </tr>
                     </thead>
@@ -227,21 +228,30 @@
                         </td>
                         <td>
                           <input
+                             class="input-mini" type="text"
                              ng-model="new_partition.number"
-                             required="" />
+                             required=""/>
                         </td>
                         <td>
                           <select 
+                             class="input-small"
                              ng-model="new_partition.type"
                              ng-options="type for type in types" />
                         </td>
                         <td>
                           <input
+                             class="input-small"
                              ng-model="new_partition.mount"
                              required="" />
                         </td>
                         <td>
                           <input
+                             ng-model="new_partition.is_boot"
+                             type="checkbox" />
+                        </td>
+                        <td>
+                          <input
+                             class="input-mini"
                              ng-model="new_partition.size" 
                              required=""/>
                         </td>
@@ -255,6 +265,7 @@
                         <td>{{ partition.number }}</td>
                         <td>{{ from_type_id(partition.type) }}</td>
                         <td>{{ partition.mount_point }}</td>
+                        <td>{{ partition.is_boot }}</td>
                         <td>{{ partition.size_in_mb }}</td>
                       </tr>
                       

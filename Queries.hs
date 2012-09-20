@@ -63,7 +63,7 @@ hostsQuery =
               , "left outer join dhcp_entry d"
               , "on h.id = d.host_id;"
               ])
-    
+
 
 updateHostProfileQuery :: Int -> Int -> IO Integer
 updateHostProfileQuery host profile =
@@ -175,14 +175,15 @@ diskPartitionsQuery disk =
               , ", partition_number"
               , ", partition_type"
               , ", mount_point"
+              , ", is_boot"
               , ", size_in_mb"
               , "from disk_partition"
               , "where disk_id = ?disk;"
               ])
     
 
-newPrimaryPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
-newPrimaryPartitionQuery disk number mount size =
+newPrimaryPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+newPrimaryPartitionQuery disk number mount boot size =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
@@ -190,16 +191,17 @@ newPrimaryPartitionQuery disk number mount size =
               , ", partition_number"
               , ", partition_type"
               , ", mount_point"
+              , ", is_boot"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
               , ") values (?disk, ?number, ?number, ?mount"
-              , "         , ?size, null, null);"
+              , "         , ?boot, ?size, null, null);"
               ])
     
     
-newExtendedPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
-newExtendedPartitionQuery disk number mount size =
+newExtendedPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+newExtendedPartitionQuery disk number mount boot size =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into disk_partition"
@@ -207,15 +209,16 @@ newExtendedPartitionQuery disk number mount size =
               , ", partition_number"
               , ", partition_type"
               , ", mount_point"
+              , ", is_boot"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
-              , ") values (?disk, ?number, 0, ?mount, ?size, null, null);"
+              , ") values (?disk, ?number, 0, ?mount, ?boot, ?size, null, null);"
               ])
     
     
-newLogicalPartitionQuery :: Int -> Int -> String -> Int -> IO Integer
-newLogicalPartitionQuery disk number mount size =
+newLogicalPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+newLogicalPartitionQuery disk number mount boot size =
   do
     let parttype = number
     let (expartn, expartt) = if number==5 
@@ -227,12 +230,13 @@ newLogicalPartitionQuery disk number mount size =
               , ", partition_number"
               , ", partition_type"
               , ", mount_point"
+              , ", is_boot"
               , ", size_in_mb"
               , ", chain_partition_number"
               , ", chain_partition_type"
               , ")"
               , "values"
-              , "( ?disk, ?number, ?number, ?mount, ?size"
+              , "( ?disk, ?number, ?number, ?mount, ?boot, ?size"
               , ", max(?expartn,"
               , "      (select dp.partition_number"    
               , "      from disk_partition dp"
@@ -264,6 +268,7 @@ fdiskQuery host =
         , ", p.partition_number"
         , ", p.partition_type"
         , ", p.mount_point"
+        , ", p.is_boot"
         , ", p.size_in_mb"
         , "from disk_partition p"
         , "inner join disk    d on d.id         = p.disk_id"
