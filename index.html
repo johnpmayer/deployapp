@@ -100,6 +100,7 @@
                 <th>Description</th>
                 <th>Disk Layout</th>
                 <th>Base Image</th>
+                <th>Software Packages</th>
               </tr>
             </thead>
             <tbody>
@@ -109,7 +110,8 @@
                   <a ng-click="create_profile()">Create</a>
                 </td>
                 <td>
-                  <input ng-model="new_profile.name"
+                  <input class="input-small"
+                         ng-model="new_profile.name"
                          required="" />
                 </td>
                 <td>
@@ -118,12 +120,16 @@
                 </td>
                 <td>
                   <select ng-model="new_profile.disk"
+                          class="input-small"
                           ng-options="disk.name for disk in disks" />
                 </td>
                 <td>
                   <select ng-model="new_profile.image"
                           ng-options="image.name for image in images"
                           />
+                </td>
+                <td>
+                  Add software after creating profile
                 </td>
               </tr>
               
@@ -136,6 +142,29 @@
                 <td>{{ profile.description }}</td>
                 <td>{{ disk_lookup[profile.disk_id] }}</td>
                 <td>{{ image_lookup[profile.image_id] }}</td>
+                <td>
+                  <div>
+                    Search Packages
+                    <input class="input-small"
+                           ng-model="profile.package_search" />
+                    <ul ng-show="profile.package_search.length > 1">
+                      <li ng-controller="NewSoftware"
+                          ng-repeat="software in softwares | filter:profile.package_search">
+                        {{ software.package_name }}
+                        <a ng-click="add_package()">(add)</a>
+                      </li>
+                    </ul>
+                    <br/>
+                    Included Packages
+                    <ul>
+                      <li ng-controller="ExistingSoftware"
+                          ng-repeat="software in profile.packages">
+                        {{ software.package_name }}
+                        <a ng-click="remove_package()">(remove)</a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
               </tr>
               
             </tbody>

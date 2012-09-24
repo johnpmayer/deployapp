@@ -1,6 +1,6 @@
 
 {-# Options -Wall #-}
-{-# LANGUAGE TemplateHaskell, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, ScopedTypeVariables, QuasiQuotes #-}
 
 module Queries where
 
@@ -131,6 +131,31 @@ deleteProfileQuery profile =
     runQuery $(compileQuery $
               "delete from profile where id = ?profile;")
 
+getProfilePackagesQuery :: Int -> IO [Software]
+getProfilePackagesQuery profile = 
+  do
+    map (uncurryN Software) <$> runQuery $(compileQuery $ unlines
+                  [ "select id, package_name"
+                  , "from software s"
+                  , "inner join install i"
+                  , "on s.id = i.software_id"
+                  , "where i.profile_id = ?profile"
+                  ])
+
+addPackageToProfileQuery :: Int -> Int -> IO Integer
+addPackageToProfileQuery profile package =
+  runQuery $(compileQuery [$multiline|
+           insert into install
+           (profile_id, software_id)
+           values (?profile, ?package)|])
+
+removePackageFromProfileQuery :: Int -> Int -> IO Integer
+removePackageFromProfileQuery profile package =
+  runQuery $(compileQuery [$multiline|
+           delete from install
+           where profile_id = ?profile
+           and software_id = ?package|])
+
 imagesQuery :: IO [Image]
 imagesQuery = 
   map (uncurryN Image) <$> runQuery $(compileQuery $
@@ -150,7 +175,6 @@ disksQuery =
               ,  ", name"
               ,  "from disk;"
               ])
-    
 
 newDiskQuery :: String -> IO Integer
 newDiskQuery diskname =

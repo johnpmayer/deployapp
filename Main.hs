@@ -48,6 +48,10 @@ site =
            , ("app/profile", method PUT createProfile <|>
                              method DELETE deleteProfile)
 
+           , ("app/profile/:profile_id/packages", method GET getProfilePackages)
+           , ("app/profile/package", method PUT addPackageToProfile <|>
+                                     method DELETE removePackageFromProfile)
+
            , ("app/images", method GET $ makeJSONHandler imagesQuery)
 
            , ("app/softwares", method GET $ makeJSONHandler softwaresQuery)
@@ -55,9 +59,9 @@ site =
            , ("app/disks", method GET $ makeJSONHandler disksQuery)
            , ("app/disk", method PUT createDisk <|>
                           method DELETE deleteDisk)
-
-           , ("app/partitions/:disk_id", method GET getPartitions)
-           , ("app/partition", method PUT createPartition <|>
+                          
+           , ("app/disk/:disk_id/partitions", method GET getPartitions)
+           , ("app/disk/partition", method PUT createPartition <|>
                                method DELETE deletePartition)
 
            , ("core/check/:mac", method GET checkHost)
@@ -124,6 +128,28 @@ deleteProfile =
   do
     profile_id' <- requireInt "profile_id"
     makeJSONHandler $ deleteProfileQuery profile_id'
+
+getProfilePackages :: Snap ()
+getProfilePackages =
+  do               
+    profile_id' <- requireInt "profile_id"
+    makeJSONHandler $ getProfilePackagesQuery profile_id'
+
+addPackageToProfile :: Snap ()
+addPackageToProfile =
+  do
+    profile_id' <- requireInt "profile_id"
+    package_id' <- requireInt "package_id"
+    makeJSONHandler $ addPackageToProfileQuery profile_id' package_id'
+
+removePackageFromProfile :: Snap ()
+removePackageFromProfile =
+  do
+    profile_id' <- requireInt "profile_id"
+    package_id' <- requireInt "package_id"
+    makeJSONHandler $ removePackageFromProfileQuery profile_id' package_id'
+
+
 
 createDisk :: Snap ()
 createDisk =

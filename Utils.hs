@@ -14,6 +14,7 @@ import           Database.HDBC
 import           Database.MetaHDBC
 
 import           Language.Haskell.TH
+import           Language.Haskell.TH.Quote
 
 import           Snap.Core
 
@@ -103,3 +104,6 @@ requireOne query =
     case results of
       [x] -> return x
       _   -> pass
+
+multiline :: QuasiQuoter
+multiline = QuasiQuoter { quoteExp = litE . stringL }

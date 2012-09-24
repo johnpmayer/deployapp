@@ -9,7 +9,7 @@ var copout = function() {
 // For use across tabs
 function Deploy($scope, $http) {
     
-    $scope.disk_lookup = {}
+    //$scope.disk_lookup = {}
     
     $scope.reload_disks = function() {
         $http.get('app/disks')
@@ -18,11 +18,13 @@ function Deploy($scope, $http) {
                 
                 //alert("Disks: " + JSON.stringify($scope.disks));
                 
+                /*
                 for (var index in $scope.disks) {
                     var disk = $scope.disks[index];
                     //alert("Disk: " + JSON.stringify(disk));
                     $scope.disk_lookup[disk.id] = disk.name;
                 }
+                */
                 
                 //alert("Lookup: " + 
                 //JSON.stringify($scope.disk_lookup));
@@ -73,6 +75,16 @@ function Deploy($scope, $http) {
     }
     
     $scope.reload_ips();
+    
+    $scope.reload_softwares = function() {
+        $http.get('app/softwares')
+            .success(function(data) {
+                $scope.softwares = data;
+            })
+            .error(copout);
+    };
+
+    $scope.reload_softwares();
     
 }
 
@@ -312,6 +324,69 @@ function Profile($scope, $http) {
         
     }
     
+    $scope.profile.reload_packages = function() {
+        
+        // Todo GET app/profile/packages
+        var profile_id = $scope.profile.id;
+        
+        $http({ method : 'GET',
+                url    : 'app/profile/' + profile_id + '/packages' }
+             ).success(function(data) {
+                 $scope.profile.packages = data;
+             }).error(copout);
+        
+    }
+    
+    $scope.profile.reload_packages();
+    
+}
+
+function NewSoftware($scope, $http) {
+    
+    $scope.add_package = function() {
+        var package_id = $scope.software.id;
+        var profile_id = $scope.profile.id;
+        alert("Adding " + package_id + " to profile " + profile_id + ".");
+        
+        var data = $.param({ package_id : package_id,
+                             profile_id : profile_id });
+        
+        $http({ method  : 'PUT',
+                url     : 'app/profile/package',
+                data    : data,
+                headers : snap_form_headers
+              }
+             ).success(function(data) {
+                 alert(data);
+                 $scope.profile.reload_packages();
+             }).error(copout);
+    }
+    
+    
+}
+
+function ExistingSoftware($scope, $http) {
+    
+    // ToDo: DELETE app/profile/package
+    $scope.remove_package = function() {
+        var package_id = $scope.software.id;
+        var profile_id = $scope.profile.id;
+        alert("Removing " + package_id + " from profile " + profile_id + ".");
+        
+        var data = $.param({ package_id : package_id,
+                             profile_id : profile_id });
+        
+        $http({ method  : 'DELETE',
+                url     : 'app/profile/package',
+                data    : data,
+                headers : snap_form_headers
+              }
+             ).success(function(data) {
+                 alert(data);
+                 $scope.profile.reload_packages();
+             }).error(copout);
+    }
+    
 }
 
 function Images($scope, $http) {
@@ -390,7 +465,7 @@ function Disk($scope, $http) {
 function Partitions($scope, $http) {
     
     $scope.reload_partitions = function() {
-        $http.get('app/partitions/'+$scope.disk.id)
+        $http.get('app/disk/'+$scope.disk.id+"/partitions")
             .success(function(data) {
                 $scope.partitions = data;
             }).error(copout);
@@ -430,7 +505,7 @@ function Partitions($scope, $http) {
         );
         
         $http({ method    : 'PUT',
-                url       : 'app/partition',
+                url       : 'app/disk/partition',
                 data      : data,
                 headers   : snap_form_headers}
              ).success(function(data) {
@@ -461,7 +536,7 @@ function Partition($scope, $http) {
         */
         
         $http({ method    : 'DELETE',
-                url       : 'app/partition',
+                url       : 'app/disk/partition',
                 data      : $.param(
                     { partition_id: $scope.partition.id }
                 ),
