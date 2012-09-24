@@ -34,6 +34,7 @@ site =
      ifTop (serveFile "index.html") <|>
      dir "static" (serveDirectory "static") <|>
      dir "images" (serveDirectory "images") <|>
+     dir "repo" (serveDirectory "repo") <|>
 
      route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
            , ("app/host/profile", method POST updateHostProfile <|>
