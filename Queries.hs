@@ -36,8 +36,8 @@ registerHostQuery mac =
   do
     runQuery $(compileQuery $ unlines
               [ "insert into host"
-              , "(hw_address, profile_id)"
-              , "values (?mac, null);"
+              , "(hw_address, deploy_stage)"
+              , "values (?mac, 0);"
               ])
 
 reportHostIPQuery :: Int -> Int -> IO Integer
@@ -49,6 +49,17 @@ reportHostIPQuery host ip =
              , "where id = ?host"
              ])
 
+hostIsStagedQuery :: Int -> IO [Int]
+hostIsStagedQuery host = runQuery $(compileQuery [$multiline|
+                       select deploy_stage
+                       from host
+                       where id = ?host|])
+
+getHostMacQuery :: Int -> IO [String]
+getHostMacQuery host = do runQuery $(compileQuery [$multiline|
+                     select hw_address from host
+                     where id = ?host|])
+
 hostsQuery :: IO [Host]
 hostsQuery = 
   do    
@@ -59,11 +70,26 @@ hostsQuery =
               , ", h.profile_id"
               , ", h.last_reported_ip"
               , ", d.ip_assignment"
+              , ", h.deploy_stage"
               , "from host h"
               , "left outer join dhcp_entry d"
               , "on h.id = d.host_id;"
               ])
 
+stageHostQuery :: Int -> IO Integer
+stageHostQuery host = runQuery $(compileQuery [$multiline|
+                    update host
+                    set deploy_stage = 1
+                    where id = ?host
+                    and profile_id is not null
+                    and deploy_stage = 0|])
+
+markHostHotQuery :: Int -> IO Integer
+markHostHotQuery host = runQuery $(compileQuery [$multiline|
+                 update host
+                 set deploy_stage = 2
+                 where id = ?host
+                 and deploy_stage = 1|])
 
 updateHostProfileQuery :: Int -> Int -> IO Integer
 updateHostProfileQuery host profile =
@@ -71,7 +97,8 @@ updateHostProfileQuery host profile =
     runQuery $(compileQuery $ unlines
               [ "update host"
               , "set profile_id = ?profile"
-              , "where id = ?host;"
+              , "where id = ?host"
+              , "and deploy_stage = 0;"
               ])
 
 updateHostIPQuery :: Int -> Int -> IO Integer
@@ -89,7 +116,8 @@ unassignHostProfileQuery host =
     runQuery $(compileQuery $ unlines
               [ "update host"
               , "set profile_id = null"
-              , "where id = ?host;"
+              , "where id = ?host"
+              , "and deploy_stage = 0;"
               ])
 
 unassignHostIPQuery :: Int -> IO Integer

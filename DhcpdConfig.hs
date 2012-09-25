@@ -5,6 +5,7 @@
 module DhcpdConfig where
 
 import qualified Data.ByteString.Lazy.Char8 as B
+import           Data.Char
 import           Data.Maybe
 
 import System.Process
@@ -69,3 +70,18 @@ entryFromHost host = do
   fixed_address' <- ip_assignment host -- auto failthrough
   let hw_ethernet' = hw_address host
   return $ Entry hw_ethernet' fixed_address'
+
+
+symlinkLocalboot :: String -> CreateProcess
+symlinkLocalboot hostMAC = 
+  shell $ "ln -sf localboot "
+        ++ "/var/lib/tftpboot/pxelinux.cfg/01-" ++ mac_dash_lower
+  where mac_dash_lower = map toLower 
+                       . map (\c -> if c == ':' then '-' else c)
+                       $ hostMAC
+
+switchLocalbootPXE :: String -> IO ()
+switchLocalbootPXE hostMAC = 
+  do 
+    _linkCode <- simpleRunProcess $ symlinkLocalboot hostMAC
+    return ()

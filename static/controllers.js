@@ -2,8 +2,8 @@
 var snap_form_headers = 
     { 'Content-Type' : 'application/x-www-form-urlencoded'}
 
-var copout = function() {
-    alert("Something went wrong, contact your edge-case engineer");
+var copout = function(data) {
+    alert("Something went wrong, contact your edge-case engineer:\n " + data);
 }
 
 // For use across tabs
@@ -97,6 +97,8 @@ function Hosts($scope, $http) {
     $scope.reload_hosts();
     
     $scope.hostOrderProp = "hw_address";
+    
+    $scope.deploy_stage_lookup = ["Not staged","Staged","Hot"];
 }
 
 function Host($scope, $http) {
@@ -262,6 +264,18 @@ function Host($scope, $http) {
         
     }
 
+    $scope.stage_host = function() {
+        var host_id = $scope.host.id;
+        var data = $.param({host_id:host_id});
+        $http({ method  : 'POST',
+                url     : 'app/host/stage',
+                data    : data,
+                headers : snap_form_headers }
+             ).success(function(data) {
+                 alert(data);
+                 $scope.reload_hosts();
+             }).error(copout);
+    }
     
 }
 

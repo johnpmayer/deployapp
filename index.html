@@ -22,6 +22,7 @@
                 <th>Reported IP</th>
                 <th>DHCP Assignment</th>
                 <th>Profile</th>
+                <th>Deploy Stage</th>
                 <th>Reboot</th>
               <tr>
             </thead>
@@ -54,6 +55,7 @@
                     (unassign)
                   </a>
                   <select
+                     class="input-medium"
                      ng-show="host.ip_assignment < 0"
                      ng-model="host.new_ip"
                      ng-change="update_host_ip()"
@@ -68,11 +70,21 @@
                     (unassign)
                   </a>
                   <select
+                     class="input-medium"
                      ng-show="host.profile_id < 0"
                      ng-model="host.new_profile"
                      ng-change="update_host_profile()"
                      ng-options="profile.name for profile in profiles">
                   </select>
+                </td>
+                
+                <td>
+                  {{ deploy_stage_lookup[host.deploy_stage] }}
+                  <a ng-show="host.deploy_stage == 0 &&
+                              host.profile_id > 0"
+                     ng-click="stage_host()">
+                    (stage)
+                  </a>
                 </td>
                 
                 <td>

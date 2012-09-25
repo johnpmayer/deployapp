@@ -41,6 +41,7 @@ site =
                                   method DELETE unassignHostProfile)
            , ("app/host/ip", method POST   updateHostIP <|>
                              method DELETE unassignHostIP)
+           , ("app/host/stage", method POST stageHost)
            , ("app/host/ping", method POST pingHostIP)
            , ("app/host/reboot", method POST $ rebootHost)
            
@@ -68,10 +69,12 @@ site =
      route [ ("core/check/:mac", method GET checkHost)
            , ("core/register/:mac", method GET registerHost)
            , ("core/report/:host_id/:ip", method GET reportHostIP)
+           , ("core/isstaged/:host_id", method GET isHostStaged)
            , ("core/fdisk/:host_id", method GET fdisk)
            , ("core/fstab/:host_id", method GET fstab)
            , ("core/archive/:host_id", method GET archive)
            , ("core/packages/:host_id", method GET packages)
+           , ("core/finished/:host_id", method GET finished)
            ]
 
 {- APP -}
@@ -103,6 +106,12 @@ unassignHostIP =
     host <- requireInt "host_id"
     makeJSONHandler $ unassignHostIPQuery host
     liftIO reconfigureDhcpd
+
+stageHost :: Snap ()
+stageHost =
+  do
+    host <- requireInt "host_id"
+    makeJSONHandler $ stageHostQuery host
 
 pingHostIP :: Snap ()
 pingHostIP =
@@ -216,6 +225,13 @@ reportHostIP =
     host_ip' <- requireInt "ip"
     makeJSONHandler $ reportHostIPQuery host_id' host_ip'
 
+isHostStaged :: Snap ()
+isHostStaged = 
+  do 
+    host <- requireInt "host_id"
+    deploy_stage' <- requireOne $ hostIsStagedQuery host
+    writeLBS . B.pack . show $ deploy_stage'
+
 fdisk :: Snap ()
 fdisk = 
   do
@@ -245,3 +261,9 @@ packages :: Snap ()
 packages = do host_id' <- requireInt "host_id"
               packages' <- liftIO $ getHostPackagesQuery host_id'
               writeLBS . B.pack . unlines $ packages'
+
+finished :: Snap ()
+finished = do host <- requireInt "host_id"
+              mac <- requireOne $ getHostMacQuery host
+              liftIO $ switchLocalbootPXE mac
+              makeJSONHandler $ markHostHotQuery host

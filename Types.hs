@@ -14,15 +14,17 @@ data Host = Host { host_id          :: Int
                  , host_profile_id  :: Maybe Int
                  , last_reported_ip :: Maybe Int
                  , ip_assignment    :: Maybe Int
+                 , deploy_stage     :: Int
                  } deriving (Show)
 
 instance ToJSON Host where
-  toJSON (Host host_id' hw_address' profile' last_ip' ip_assign') = 
+  toJSON (Host host_id' hw_address' profile' last_ip' ip_assign' deploy_stage') = 
     object [ "id"               .= host_id'
            , "hw_address"       .= hw_address'
            , "profile_id"       .= fromMaybe (-1) profile'
            , "last_reported_ip" .= fromMaybe (-1) last_ip'
            , "ip_assignment"    .= fromMaybe (-1) ip_assign'
+           , "deploy_stage"     .= deploy_stage'
            ]
 
 data Profile = Profile { profile_id :: Int
