@@ -63,13 +63,15 @@ site =
            , ("app/disk/:disk_id/partitions", method GET getPartitions)
            , ("app/disk/partition", method PUT createPartition <|>
                                method DELETE deletePartition)
+           ] <|>
 
-           , ("core/check/:mac", method GET checkHost)
+     route [ ("core/check/:mac", method GET checkHost)
            , ("core/register/:mac", method GET registerHost)
            , ("core/report/:host_id/:ip", method GET reportHostIP)
            , ("core/fdisk/:host_id", method GET fdisk)
            , ("core/fstab/:host_id", method GET fstab)
            , ("core/archive/:host_id", method GET archive)
+           , ("core/packages/:host_id", method GET packages)
            ]
 
 {- APP -}
@@ -238,3 +240,8 @@ archive =
     host_id' <- requireInt "host_id"
     archive_url' <- requireOne $ archiveQuery host_id'
     writeLBS . B.pack $ archive_url'
+
+packages :: Snap ()
+packages = do host_id' <- requireInt "host_id"
+              packages' <- liftIO $ getHostPackagesQuery host_id'
+              writeLBS . B.pack . unlines $ packages'

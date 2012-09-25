@@ -142,6 +142,15 @@ getProfilePackagesQuery profile =
                   , "where i.profile_id = ?profile"
                   ])
 
+getHostPackagesQuery :: Int -> IO [String]
+getHostPackagesQuery host = runQuery $(compileQuery [$multiline|
+                          select s.package_name
+                          from software s
+                          inner join install i on s.id = i.software_id
+                          inner join profile p on p.id = i.profile_id
+                          inner join host    h on p.id = h.profile_id
+                          where h.id = ?host|])
+
 addPackageToProfileQuery :: Int -> Int -> IO Integer
 addPackageToProfileQuery profile package =
   runQuery $(compileQuery [$multiline|

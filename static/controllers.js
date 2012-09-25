@@ -9,7 +9,7 @@ var copout = function() {
 // For use across tabs
 function Deploy($scope, $http) {
     
-    //$scope.disk_lookup = {}
+    $scope.disk_lookup = {}
     
     $scope.reload_disks = function() {
         $http.get('app/disks')
@@ -18,13 +18,11 @@ function Deploy($scope, $http) {
                 
                 //alert("Disks: " + JSON.stringify($scope.disks));
                 
-                /*
                 for (var index in $scope.disks) {
                     var disk = $scope.disks[index];
                     //alert("Disk: " + JSON.stringify(disk));
                     $scope.disk_lookup[disk.id] = disk.name;
                 }
-                */
                 
                 //alert("Lookup: " + 
                 //JSON.stringify($scope.disk_lookup));
