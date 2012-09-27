@@ -1,0 +1,1 @@
+echo "newProfileQuery  $1 $2 $3 $4" | ghci Queries.hs

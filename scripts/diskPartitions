@@ -1,0 +1,1 @@
+echo "diskPartitionsQuery  $1" | ghci Queries.hs

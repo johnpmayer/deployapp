@@ -1,0 +1,1 @@
+echo "fdiskQuery  $1" | ghci Queries.hs

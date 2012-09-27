@@ -1,0 +1,1 @@
+echo "disksQuery " | ghci Queries.hs

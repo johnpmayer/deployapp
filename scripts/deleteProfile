@@ -1,0 +1,1 @@
+echo "deleteProfileQuery  $1" | ghci Queries.hs

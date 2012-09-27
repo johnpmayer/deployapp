@@ -1,0 +1,1 @@
+echo "profilesQuery " | ghci Queries.hs

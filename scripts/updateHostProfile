@@ -1,0 +1,1 @@
+echo "updateHostProfileQuery  $1 $2" | ghci Queries.hs

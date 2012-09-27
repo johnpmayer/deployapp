@@ -1,0 +1,1 @@
+echo "removePackageFromProfileQuery  $1 $2" | ghci Queries.hs

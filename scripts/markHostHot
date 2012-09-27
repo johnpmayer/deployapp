@@ -1,0 +1,1 @@
+echo "markHostHotQuery  $1" | ghci Queries.hs

@@ -1,0 +1,1 @@
+echo "newPrimaryPartitionQuery  $1 $2 $3 $4 $5" | ghci Queries.hs

@@ -1,0 +1,1 @@
+echo "registerHostQuery  $1" | ghci Queries.hs

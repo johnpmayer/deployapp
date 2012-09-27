@@ -1,0 +1,1 @@
+echo "deleteDiskQuery  $1" | ghci Queries.hs

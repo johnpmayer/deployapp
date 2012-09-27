@@ -1,0 +1,1 @@
+echo "stageHostQuery  $1" | ghci Queries.hs

@@ -1,0 +1,1 @@
+echo "unassignHostIPQuery  $1" | ghci Queries.hs

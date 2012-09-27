@@ -1,0 +1,1 @@
+echo "updateHostIPQuery  $1 $2" | ghci Queries.hs
