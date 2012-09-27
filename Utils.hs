@@ -68,11 +68,11 @@ requireParam convert key =
       (Just val) -> return val
       Nothing -> debugParams >> pass
 
-requireString :: B.ByteString -> Snap String
-requireString = requireParam (fmap id)
+requireString :: String -> Snap String
+requireString = requireParam (fmap id) . B.pack
 
-requireInt :: B.ByteString -> Snap Int
-requireInt = requireParam safeRead
+requireInt :: String -> Snap Int
+requireInt = requireParam safeRead . B.pack
 
 maybeIntParam :: B.ByteString -> Snap (Maybe Int)
 maybeIntParam key = 
@@ -107,3 +107,9 @@ requireOne query =
 
 multiline :: QuasiQuoter
 multiline = QuasiQuoter { quoteExp = litE . stringL }
+
+noAccessHandler :: Snap a
+noAccessHandler = 
+  do liftIO $ putStrLn "Access denied"
+     writeLBS . encode $ "no access"
+     withResponse finishWith

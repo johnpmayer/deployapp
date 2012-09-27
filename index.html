@@ -9,318 +9,347 @@
     <script src="static/controllers.js"></script>
   </head>
   <body>
-    <h1>Deploy App!!!</h1>
-
+    
     <div ng-controller="Deploy">
-      <tabs>
+      
+      <h1>
+        Deploy App!!!
+        <span ng-show="loading>0">
+          (Loading {{ loading }})
+        </span>
+        {{ logged_in.status }}
+      </h1>
+      
+      <div ng-controller="Login"
+           ng-show="!logged_in.status">
+        <table>
+          <tbody>
+            <tr>
+              <td>Username</td>
+              <td><input ng-model="username" type="text" required=""/></td>
+            </tr>
+            <tr>
+              <td>Password</td>
+              <td><input ng-model="password" type="password"
+                         required=""/></td>
+            </tr>
+            <tr><td><a ng-click="login()">Login</a></td></tr>
+          </tbody>
+        </table>
         
-        <pane title="Hosts">
-          <table ng-controller="Hosts" class="table">
-            <thead>
-              <tr>
-                <th>Mac Address</th>
-                <th>Reported IP</th>
-                <th>DHCP Assignment</th>
-                <th>Profile</th>
-                <th>Deploy Stage</th>
-                <th>Reboot</th>
-              <tr>
-            </thead>
-            <tbody>
-              
-              <tr ng-controller="Host"
-                  ng-repeat="host in hosts | orderBy:hostOrderProp">
-
-                <td>{{ host.hw_address }}</td>
+      </div>
+      
+      <div ng-show="logged_in.status">
+        <tabs >
+          
+          <pane title="Hosts">
+            <table ng-controller="Hosts" class="table">
+              <thead>
+                <tr>
+                  <th>Mac Address</th>
+                  <th>Reported IP</th>
+                  <th>DHCP Assignment</th>
+                  <th>Profile</th>
+                  <th>Deploy Stage</th>
+                  <th>Reboot</th>
+                <tr>
+              </thead>
+              <tbody>
                 
-                <td>
-                  {{ show_ip(host.last_reported_ip) }}
-                  <a ng-click="ping_host()"
-                     ng-show="host.last_reported_ip > 0 && !host.ping.in_progress">
-                    (ping
-                    <span ng-show="host.ping.response != undefined">
-                      {{ host.ping.response }}
+                <tr ng-controller="Host"
+                    ng-repeat="host in hosts | orderBy:hostOrderProp">
+                  
+                  <td>{{ host.hw_address }}</td>
+                  
+                  <td>
+                    {{ show_ip(host.last_reported_ip) }}
+                    <a ng-click="ping_host()"
+                       ng-show="host.last_reported_ip > 0 && !host.ping.in_progress">
+                      (ping
+                      <span ng-show="host.ping.response != undefined">
+                        {{ host.ping.response }}
+                      </span>
+                      )
+                    </a>
+                    <span ng-show="host.ping.in_progress">
+                      Pinging...
                     </span>
-                    )
-                  </a>
-                  <span ng-show="host.ping.in_progress">
-                    Pinging...
-                  </span>
-                </td>
+                  </td>
+                  
+                  <td>
+                    <b>{{ show_ip(host.ip_assignment) }}</b>
+                    <a ng-click="unassign_host_ip()"
+                       ng-show="host.ip_assignment > 0">
+                      (unassign)
+                    </a>
+                    <select
+                       class="input-medium"
+                       ng-show="host.ip_assignment < 0"
+                       ng-model="host.new_ip"
+                       ng-change="update_host_ip()"
+                       ng-options="show_ip(ip) for ip in ips">
+                    </select>
+                  </td>
+                  
+                  <td>
+                    <b>{{ profile_lookup[host.profile_id] }}</b>
+                    <a ng-click="unassign_host_profile()"
+                       ng-show="host.profile_id > 0">
+                      (unassign)
+                    </a>
+                    <select
+                       class="input-medium"
+                       ng-show="host.profile_id < 0"
+                       ng-model="host.new_profile"
+                       ng-change="update_host_profile()"
+                       ng-options="profile.name for profile in profiles">
+                    </select>
+                  </td>
+                  
+                  <td>
+                    {{ deploy_stage_lookup[host.deploy_stage] }}
+                    <a ng-show="host.deploy_stage == 0 &&
+                                host.profile_id > 0"
+                       ng-click="stage_host()">
+                      (stage)
+                    </a>
+                  </td>
+                  
+                  <td>
+                    <a 
+                       ng-click="reboot_host()"
+                       ng-show="!host.reboot.in_progress">
+                      Reboot</a>
+                    <span ng-show="host.reboot.in_progress">
+                      Reboot in progress, ping to reset
+                    </span>
+                  </td>
+                  
+                </tr>
                 
-                <td>
-                  <b>{{ show_ip(host.ip_assignment) }}</b>
-                  <a ng-click="unassign_host_ip()"
-                     ng-show="host.ip_assignment > 0">
-                    (unassign)
-                  </a>
-                  <select
-                     class="input-medium"
-                     ng-show="host.ip_assignment < 0"
-                     ng-model="host.new_ip"
-                     ng-change="update_host_ip()"
-                     ng-options="show_ip(ip) for ip in ips">
-                  </select>
-                </td>
+              </tbody>
+            </table>
+          </pane>
+          
+          <pane title="Profiles">
+            <table ng-controller="Profiles" class="table">
+              <thead>
+                <tr>
+                  <th>Add/Remove</th>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Disk Layout</th>
+                  <th>Base Image</th>
+                  <th>Software Packages</th>
+                </tr>
+              </thead>
+              <tbody>
                 
-                <td>
-                  <b>{{ profile_lookup[host.profile_id] }}</b>
-                  <a ng-click="unassign_host_profile()"
-                     ng-show="host.profile_id > 0">
-                    (unassign)
-                  </a>
-                  <select
-                     class="input-medium"
-                     ng-show="host.profile_id < 0"
-                     ng-model="host.new_profile"
-                     ng-change="update_host_profile()"
-                     ng-options="profile.name for profile in profiles">
-                  </select>
-                </td>
-                
-                <td>
-                  {{ deploy_stage_lookup[host.deploy_stage] }}
-                  <a ng-show="host.deploy_stage == 0 &&
-                              host.profile_id > 0"
-                     ng-click="stage_host()">
-                    (stage)
-                  </a>
-                </td>
-                
-                <td>
-                  <a 
-                     ng-click="reboot_host()"
-                     ng-show="!host.reboot.in_progress">
-                    Reboot</a>
-                  <span ng-show="host.reboot.in_progress">
-                    Reboot in progress, ping to reset
-                  </span>
-                </td>
-                
-              </tr>
-              
-            </tbody>
-          </table>
-        </pane>
-        
-        <pane title="Profiles">
-          <table ng-controller="Profiles" class="table">
-            <thead>
-              <tr>
-                <th>Add/Remove</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Disk Layout</th>
-                <th>Base Image</th>
-                <th>Software Packages</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-              <tr>
-                <td>
-                  <a ng-click="create_profile()">Create</a>
-                </td>
-                <td>
-                  <input class="input-small"
-                         ng-model="new_profile.name"
-                         required="" />
-                </td>
-                <td>
-                  <input ng-model="new_profile.description"
-                         required="" />
-                </td>
-                <td>
-                  <select ng-model="new_profile.disk"
-                          class="input-small"
-                          ng-options="disk.name for disk in disks" />
-                </td>
-                <td>
-                  <select ng-model="new_profile.image"
-                          ng-options="image.name for image in images"
-                          />
-                </td>
-                <td>
-                  Add software after creating profile
-                </td>
-              </tr>
-              
-              <tr ng-repeat="profile in profiles"
-                  ng-controller="Profile">
-                <td>
-                  <a ng-click="delete_profile()">X</a>
-                </td>
-                <td>{{ profile.name }}</td>
-                <td>{{ profile.description }}</td>
-                <td>{{ disk_lookup[profile.disk_id] }}</td>
-                <td>{{ image_lookup[profile.image_id] }}</td>
-                <td>
-                  <div>
-                    Search Packages
+                <tr>
+                  <td>
+                    <a ng-click="create_profile()">Create</a>
+                  </td>
+                  <td>
                     <input class="input-small"
-                           ng-model="profile.package_search" />
-                    <ul ng-show="profile.package_search.length > 1">
-                      <li ng-controller="NewSoftware"
-                          ng-repeat="software in softwares | filter:profile.package_search">
-                        {{ software.package_name }}
-                        <a ng-click="add_package()">(add)</a>
-                      </li>
-                    </ul>
-                    <br/>
-                    Included Packages
-                    <ul>
-                      <li ng-controller="ExistingSoftware"
-                          ng-repeat="software in profile.packages">
-                        {{ software.package_name }}
-                        <a ng-click="remove_package()">(remove)</a>
-                      </li>
-                    </ul>
-                  </div>
-                </td>
-              </tr>
-              
-            </tbody>
-          </table>
-        </pane>
-
-        <pane title="Base Images">
-          <table ng-controller="Images"
-                 class="table">
-            <thead>
-              <tr>
-                <th>Image Name</th>
-                <th>Archive URL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="image in images">
-                <td>
-                  {{ image.name }}
-                </td>
-                <td>
-                  {{ image.archive_url }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </pane>
-        
-        
-        <pane title="Disk Layouts">
-          <table ng-controller="Disks" 
-                 class="table">
-            <thead>
-              <tr>
-                <th>Add/Remove</th>
-                <th>Layout Name</th>
-                <th>Partitions</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-              <tr>
-                <td>
-                  <a ng-click="create_disk()">Create</a>
-                </td>
-                <td>
-                  <input ng-model="new_disk.name" 
-                         required="" />
-                </td>
-                <td>
-                  <span ng-show="!current_active">
-                    Edit partitions after creating a new disk layout
-                  </span>
-                </td>
-                <td />
-              </tr>
-              
-              <tr ng-controller="Disk" 
-                  ng-repeat="disk in disks">
-                <td>
-                  <a ng-click="delete_disk()">X</a>
-                </td>
-                <td>
-                  {{ disk.name }}
-                  <a ng-show="!active_details[disk.id]"
-                     ng-click="activate(disk.id)">
-                    Expand</a>
-                </td>
-                <td>
-                  
-                  <table 
-                     ng-controller="Partitions" 
-                     ng-show="active_details[disk.id]"
-                     class="table">
-                    <thead>
-                      <tr>
-                        <th>Add/Remove</th>
-                        <th>Partition Number</th>
-                        <th>Partition Type</th>
-                        <th>Mount Point</th>
-                        <th>Boot Flag</th>
-                        <th>Size in Mb</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      
-                      <tr>
-                        <td>
-                          <a ng-click="add_partition()">Add</a>
-                        </td>
-                        <td>
-                          <input
-                             class="input-mini" type="text"
-                             ng-model="new_partition.number"
-                             required=""/>
-                        </td>
-                        <td>
-                          <select 
-                             class="input-small"
-                             ng-model="new_partition.type"
-                             ng-options="type for type in types" />
-                        </td>
-                        <td>
-                          <input
-                             class="input-small"
-                             ng-model="new_partition.mount"
-                             required="" />
-                        </td>
-                        <td>
-                          <input
-                             ng-model="new_partition.is_boot"
-                             type="checkbox" />
-                        </td>
-                        <td>
-                          <input
-                             class="input-mini"
-                             ng-model="new_partition.size" 
-                             required=""/>
-                        </td>
-                      </tr>
-                      
-                      <tr ng-repeat="partition in partitions | orderBy:order_prop"
-                          ng-controller="Partition">
-                        <td>
-                          <a ng-click="delete_partition()">X</a>
-                        </td>
-                        <td>{{ partition.number }}</td>
-                        <td>{{ from_type_id(partition.type) }}</td>
-                        <td>{{ partition.mount_point }}</td>
-                        <td>{{ partition.is_boot }}</td>
-                        <td>{{ partition.size_in_mb }}</td>
-                      </tr>
-                      
-                    </tbody>
-                  </table>
-                  
-                </td>
-              </tr>
-              
-            </tbody>
-          </table>
-        </pane>
-        
-      </tabs>
+                           ng-model="new_profile.name"
+                           required="" />
+                  </td>
+                  <td>
+                    <input ng-model="new_profile.description"
+                           required="" />
+                  </td>
+                  <td>
+                    <select ng-model="new_profile.disk"
+                            class="input-small"
+                            ng-options="disk.name for disk in disks" />
+                  </td>
+                  <td>
+                    <select ng-model="new_profile.image"
+                            ng-options="image.name for image in images"
+                            />
+                  </td>
+                  <td>
+                    Add software after creating profile
+                  </td>
+                </tr>
+                
+                <tr ng-repeat="profile in profiles"
+                    ng-controller="Profile">
+                  <td>
+                    <a ng-click="delete_profile()">X</a>
+                  </td>
+                  <td>{{ profile.name }}</td>
+                  <td>{{ profile.description }}</td>
+                  <td>{{ disk_lookup[profile.disk_id] }}</td>
+                  <td>{{ image_lookup[profile.image_id] }}</td>
+                  <td>
+                    <div>
+                      Search Packages
+                      <input class="input-small"
+                             ng-model="profile.package_search" />
+                      <ul ng-show="profile.package_search.length > 1">
+                        <li ng-controller="NewSoftware"
+                            ng-repeat="software in softwares | filter:profile.package_search">
+                          {{ software.package_name }}
+                          <a ng-click="add_package()">(add)</a>
+                        </li>
+                      </ul>
+                      <br/>
+                      Included Packages
+                      <ul>
+                        <li ng-controller="ExistingSoftware"
+                            ng-repeat="software in profile.packages">
+                          {{ software.package_name }}
+                          <a ng-click="remove_package()">(remove)</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+                
+              </tbody>
+            </table>
+          </pane>
+          
+          <pane title="Base Images">
+            <table ng-controller="Images"
+                   class="table">
+              <thead>
+                <tr>
+                  <th>Image Name</th>
+                  <th>Archive URL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="image in images">
+                  <td>
+                    {{ image.name }}
+                  </td>
+                  <td>
+                    {{ image.archive_url }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </pane>
+          
+          
+          <pane title="Disk Layouts">
+            <table ng-controller="Disks" 
+                   class="table">
+              <thead>
+                <tr>
+                  <th>Add/Remove</th>
+                  <th>Layout Name</th>
+                  <th>Partitions</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                <tr>
+                  <td>
+                    <a ng-click="create_disk()">Create</a>
+                  </td>
+                  <td>
+                    <input ng-model="new_disk.name" 
+                           required="" />
+                  </td>
+                  <td>
+                    <span ng-show="!current_active">
+                      Edit partitions after creating a new disk layout
+                    </span>
+                  </td>
+                  <td />
+                </tr>
+                
+                <tr ng-controller="Disk" 
+                    ng-repeat="disk in disks">
+                  <td>
+                    <a ng-click="delete_disk()">X</a>
+                  </td>
+                  <td>
+                    {{ disk.name }}
+                    <a ng-show="!active_details[disk.id]"
+                       ng-click="activate(disk.id)">
+                      Expand</a>
+                  </td>
+                  <td>
+                    
+                    <table 
+                       ng-controller="Partitions" 
+                       ng-show="active_details[disk.id]"
+                       class="table">
+                      <thead>
+                        <tr>
+                          <th>Add/Remove</th>
+                          <th>Partition Number</th>
+                          <th>Partition Type</th>
+                          <th>Mount Point</th>
+                          <th>Boot Flag</th>
+                          <th>Size in Mb</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        
+                        <tr>
+                          <td>
+                            <a ng-click="add_partition()">Add</a>
+                          </td>
+                          <td>
+                            <input
+                               class="input-mini" type="text"
+                               ng-model="new_partition.number"
+                               required=""/>
+                          </td>
+                          <td>
+                            <select 
+                               class="input-small"
+                               ng-model="new_partition.type"
+                               ng-options="type for type in types" />
+                          </td>
+                          <td>
+                            <input
+                               class="input-small"
+                               ng-model="new_partition.mount"
+                               required="" />
+                          </td>
+                          <td>
+                            <input
+                               ng-model="new_partition.is_boot"
+                               type="checkbox" />
+                          </td>
+                          <td>
+                            <input
+                               class="input-mini"
+                               ng-model="new_partition.size" 
+                               required=""/>
+                          </td>
+                        </tr>
+                        
+                        <tr ng-repeat="partition in partitions | orderBy:order_prop"
+                            ng-controller="Partition">
+                          <td>
+                            <a ng-click="delete_partition()">X</a>
+                          </td>
+                          <td>{{ partition.number }}</td>
+                          <td>{{ from_type_id(partition.type) }}</td>
+                          <td>{{ partition.mount_point }}</td>
+                          <td>{{ partition.is_boot }}</td>
+                          <td>{{ partition.size_in_mb }}</td>
+                        </tr>
+                        
+                      </tbody>
+                    </table>
+                    
+                  </td>
+                </tr>
+                
+              </tbody>
+            </table>
+          </pane>
+          
+        </tabs>
+      </div>
     </div>
   </body>
 </html>

@@ -5,13 +5,30 @@ var snap_form_headers =
 var copout = function(data) {
     alert("Something went wrong, contact your edge-case engineer:\n " + data);
 }
-
+ 
 // For use across tabs
 function Deploy($scope, $http) {
+    
+    $scope.logged_in = {}
+    $scope.logged_in.status = false;
+
+    $scope.set_logged_in = function(bool) {
+        //alert("in deploy set_logged_in")
+        //alert(bool)
+        $scope.logged_in.status = bool;
+    };
+    
+    $scope.loading = 0;
+    
+    $scope.copout = function(data) {
+        $scope.loading -= 1;
+        alert("Something went wrong, contact your edge-case engineer:\n " + data);
+    }
     
     $scope.disk_lookup = {}
     
     $scope.reload_disks = function() {
+        $scope.loading += 1;
         $http.get('app/disks')
             .success(function(data) {
                 $scope.disks = data;
@@ -26,7 +43,7 @@ function Deploy($scope, $http) {
                 
                 //alert("Lookup: " + 
                 //JSON.stringify($scope.disk_lookup));
-                
+                $scope.loading -= 1;
             }).error(copout);
     }
     
@@ -43,7 +60,6 @@ function Deploy($scope, $http) {
                 }
             }).error(copout);
     }
-    $scope.reload_images();
     
     $scope.profile_lookup = {}
     
@@ -72,21 +88,15 @@ function Deploy($scope, $http) {
         }
     }
     
-    $scope.reload_ips();
-    
     $scope.reload_softwares = function() {
+        $scope.loading += 1;
         $http.get('app/softwares')
             .success(function(data) {
                 $scope.softwares = data;
+                $scope.loading -= 1;
             })
-            .error(copout);
+            .error($scope.copout);
     };
-
-    $scope.reload_softwares();
-    
-}
-
-function Hosts($scope, $http) {
     
     $scope.reload_hosts = function() {
         $http.get('app/hosts').success(function(data) {
@@ -94,7 +104,52 @@ function Hosts($scope, $http) {
         });
     }
     
-    $scope.reload_hosts();
+    $scope.reload_top_level = function() {
+        $scope.reload_hosts();
+        $scope.reload_profiles();
+        $scope.reload_images();
+        $scope.reload_ips();
+        $scope.reload_softwares();
+        $scope.reload_disks();
+    }
+    
+}
+
+function Login($scope, $http) {
+    
+    $http({ method   : 'GET',
+            url      : 'app/check'}
+         ).success(function(data) {
+             if (JSON.parse(data) === true) {
+                 $scope.set_logged_in(true);
+             }
+             $scope.reload_top_level();
+         }).error(copout);
+        
+    $scope.login = function() {
+        var data = $.param({ username : $scope.username,
+                             password : $scope.password })
+                           
+        //alert(JSON.stringify(data))
+        
+        $http({ method    : 'POST',
+                url       : 'app/login',
+                data      : data,
+                headers   : snap_form_headers}
+             ).success(function(data) {
+                 //alert(data);
+                 if (JSON.parse(data) === true) {
+                     $scope.set_logged_in(true);
+                 }
+                 //alert($scope.logged_in.status)
+                 $scope.reload_top_level();
+             }).error(copout);
+        
+    }
+}
+
+function Hosts($scope, $http) {
+    
     
     $scope.hostOrderProp = "hw_address";
     
@@ -281,7 +336,6 @@ function Host($scope, $http) {
 
 function Profiles($scope, $http) {
         
-    $scope.reload_profiles();
     
     $scope.new_profile = {}
     
@@ -417,7 +471,6 @@ function Images($scope, $http) {
 
 function Disks($scope, $http) {
     
-    $scope.reload_disks();
     
     $scope.new_disk = {}
     

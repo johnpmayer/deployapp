@@ -20,50 +20,56 @@ import           DhcpdConfig
 import           Queries
 import           RemoteHost
 import           Types
+import           UserSession
 import           Utils
 
 main :: IO ()
 main =
   do
     reconfigureDhcpd
-    quickHttpServe site
+    sessionStore <- emptySessionStore
+    quickHttpServe (site sessionStore)
 
-site :: Snap ()
-site =
-     
+site :: SessionStore -> Snap ()
+site store =
+          
      ifTop (serveFile "index.html") <|>
      dir "static" (serveDirectory "static") <|>
      dir "images" (serveDirectory "images") <|>
      dir "repo" (serveDirectory "repo") <|>
 
-     route [ ("app/hosts", method GET $ makeJSONHandler hostsQuery)
-           , ("app/host/profile", method POST updateHostProfile <|>
-                                  method DELETE unassignHostProfile)
-           , ("app/host/ip", method POST   updateHostIP <|>
-                             method DELETE unassignHostIP)
-           , ("app/host/stage", method POST stageHost)
-           , ("app/host/ping", method POST pingHostIP)
-           , ("app/host/reboot", method POST $ rebootHost)
+     route [ ("app/login", method POST $ loginHandler store)
+           , ("app/check", method GET $ checkHandler store)
+           , ("app/hosts", method GET $ hostsHandler store)
+           , ("app/host/profile", method POST (updateHostProfile store) <|>
+                                  method DELETE (unassignHostProfile store))
+           , ("app/host/ip", method POST   (updateHostIP store) <|>
+                             method DELETE (unassignHostIP store))
+           , ("app/host/stage", method POST (stageHost store))
+           , ("app/host/ping", method POST (pingHostIP store))
+           , ("app/host/reboot", method POST $ (rebootHost store))
            
-           , ("app/profiles", method GET $ makeJSONHandler profilesQuery)
-           , ("app/profile", method PUT createProfile <|>
-                             method DELETE deleteProfile)
+           , ("app/profiles", method GET $ (profilesHandler store))
+           , ("app/profile", method PUT (createProfile store) <|>
+                             method DELETE (deleteProfile store))
 
-           , ("app/profile/:profile_id/packages", method GET getProfilePackages)
-           , ("app/profile/package", method PUT addPackageToProfile <|>
-                                     method DELETE removePackageFromProfile)
+           , ("app/profile/:profile_id/packages", 
+                method GET (getProfilePackages store))
 
-           , ("app/images", method GET $ makeJSONHandler imagesQuery)
+           , ("app/profile/package", method PUT (addPackageToProfile store) <|>
+                                     method DELETE (removePackageFromProfile store))
 
-           , ("app/softwares", method GET $ makeJSONHandler softwaresQuery)
+           , ("app/images", method GET $ imagesHandler store)
+
+           , ("app/softwares", method GET $ softwaresHandler store)
                              
-           , ("app/disks", method GET $ makeJSONHandler disksQuery)
-           , ("app/disk", method PUT createDisk <|>
-                          method DELETE deleteDisk)
+           , ("app/disks", method GET $ disksHandler store)
+           , ("app/disk", method PUT (createDisk store) <|>
+                          method DELETE (deleteDisk store))
                           
-           , ("app/disk/:disk_id/partitions", method GET getPartitions)
-           , ("app/disk/partition", method PUT createPartition <|>
-                               method DELETE deletePartition)
+           , ("app/disk/:disk_id/partitions", method GET (getPartitions store))
+           , ("app/disk/partition", method PUT (createPartition store) <|>
+                               method DELETE (deletePartition store))
            ] <|>
 
      route [ ("core/check/:mac", method GET checkHost)
@@ -79,109 +85,164 @@ site =
 
 {- APP -}
 
-updateHostProfile :: Snap ()
-updateHostProfile = 
+-- Basic gets
+
+hostsHandler :: SessionStore -> Snap ()
+hostsHandler store =
+  do
+    clearSecurityLevel store ["get hosts"] ReadOnly
+    makeJSONHandler hostsQuery
+
+profilesHandler :: SessionStore -> Snap ()
+profilesHandler store =
+  do
+    clearSecurityLevel store ["get profiles"] ReadOnly
+    makeJSONHandler profilesQuery
+
+imagesHandler :: SessionStore -> Snap ()
+imagesHandler store =
+  do
+    clearSecurityLevel store ["get images"] ReadOnly
+    makeJSONHandler imagesQuery
+
+softwaresHandler :: SessionStore -> Snap ()
+softwaresHandler store =
+  do
+    clearSecurityLevel store ["get softwares"] ReadOnly
+    makeJSONHandler softwaresQuery
+
+disksHandler :: SessionStore -> Snap ()
+disksHandler store =
+  do
+    clearSecurityLevel store ["get disks"] ReadOnly
+    makeJSONHandler disksQuery
+
+-- takes some params
+
+updateHostProfile :: SessionStore -> Snap ()
+updateHostProfile store = 
   do
     host <- requireInt "host_id"
     profile <- requireInt "profile_id"
+    clearSecurityLevel store ["update host profile", show host, show profile] 
+                       ReadWrite
     makeJSONHandler $ updateHostProfileQuery host profile
 
-updateHostIP :: Snap ()
-updateHostIP =
+updateHostIP :: SessionStore -> Snap ()
+updateHostIP store =
   do
     host <- requireInt "host_id"
     ip <- requireInt "ip_address"
+    clearSecurityLevel store ["assign host ip", show host, show ip] ReadWrite
     makeJSONHandler $ updateHostIPQuery host ip
     liftIO reconfigureDhcpd
 
-unassignHostProfile :: Snap ()
-unassignHostProfile =
+unassignHostProfile :: SessionStore -> Snap ()
+unassignHostProfile store =
   do
     host <- requireInt "host_id"
+    clearSecurityLevel store ["unassign host profile", show host] ReadWrite
     makeJSONHandler $ unassignHostProfileQuery host
 
-unassignHostIP :: Snap ()
-unassignHostIP =
+unassignHostIP :: SessionStore -> Snap ()
+unassignHostIP store =
   do
     host <- requireInt "host_id"
+    clearSecurityLevel store ["unassign host ip", show host] ReadWrite
     makeJSONHandler $ unassignHostIPQuery host
     liftIO reconfigureDhcpd
 
-stageHost :: Snap ()
-stageHost =
+stageHost :: SessionStore -> Snap ()
+stageHost store =
   do
     host <- requireInt "host_id"
+    clearSecurityLevel store ["stage host", show host] Admin
     makeJSONHandler $ stageHostQuery host
 
-pingHostIP :: Snap ()
-pingHostIP =
+pingHostIP :: SessionStore -> Snap ()
+pingHostIP store =
   do
     ip <- requireInt "ip_address"
+    clearSecurityLevel store ["ping host", show ip] ReadOnly
     makeJSONHandler $ pingHost ip
 
-rebootHost :: Snap ()
-rebootHost =
+rebootHost :: SessionStore -> Snap ()
+rebootHost store =
   do
     ip <- requireInt "ip_address"
+    clearSecurityLevel store ["reboot host", show ip] Admin
     makeJSONHandler $ runRebootHost ip
 
-createProfile :: Snap ()
-createProfile =
+createProfile :: SessionStore -> Snap ()
+createProfile store =
   do
     name <- requireString "name"
     desc <- requireString "description"
     disk <- requireInt "disk_id"
     image <- requireInt "image_id"
+    clearSecurityLevel store ["create profile", name, desc, show disk, show image] 
+                       ReadWrite
     makeJSONHandler $ newProfileQuery name desc disk image
 
-deleteProfile :: Snap ()
-deleteProfile =
+deleteProfile :: SessionStore -> Snap ()
+deleteProfile store =
   do
     profile_id' <- requireInt "profile_id"
+    clearSecurityLevel store ["delete profile", show profile_id'] ReadWrite
     makeJSONHandler $ deleteProfileQuery profile_id'
 
-getProfilePackages :: Snap ()
-getProfilePackages =
+getProfilePackages :: SessionStore -> Snap ()
+getProfilePackages store =
   do               
     profile_id' <- requireInt "profile_id"
+    clearSecurityLevel store ["get profile packages", show profile_id'] ReadOnly
     makeJSONHandler $ getProfilePackagesQuery profile_id'
 
-addPackageToProfile :: Snap ()
-addPackageToProfile =
+addPackageToProfile :: SessionStore -> Snap ()
+addPackageToProfile store =
   do
     profile_id' <- requireInt "profile_id"
     package_id' <- requireInt "package_id"
+    clearSecurityLevel store ["add package to profile"
+                             , show profile_id'
+                             , show package_id']
+                       ReadWrite
     makeJSONHandler $ addPackageToProfileQuery profile_id' package_id'
 
-removePackageFromProfile :: Snap ()
-removePackageFromProfile =
+removePackageFromProfile :: SessionStore -> Snap ()
+removePackageFromProfile store =
   do
     profile_id' <- requireInt "profile_id"
     package_id' <- requireInt "package_id"
+    clearSecurityLevel store ["remote package from profile"
+                             , show profile_id'
+                             , show package_id']
+                             ReadWrite
     makeJSONHandler $ removePackageFromProfileQuery profile_id' package_id'
 
-
-
-createDisk :: Snap ()
-createDisk =
+createDisk :: SessionStore -> Snap ()
+createDisk store =
   do
     disk_name' <- requireString "disk_name"
+    clearSecurityLevel store ["create disk", disk_name'] ReadWrite
     makeJSONHandler $ newDiskQuery disk_name'
 
-deleteDisk :: Snap ()
-deleteDisk =
+deleteDisk :: SessionStore -> Snap ()
+deleteDisk store =
   do
     disk_id' <- requireInt "disk_id"
+    clearSecurityLevel store ["delete disk", show disk_id'] ReadWrite
     makeJSONHandler $ deleteDiskQuery disk_id'
 
-getPartitions :: Snap ()
-getPartitions = 
+getPartitions :: SessionStore -> Snap ()
+getPartitions store = 
   do
     disk_id' <- requireInt "disk_id"
+    clearSecurityLevel store ["get disk partitions", show disk_id'] ReadOnly
     makeJSONHandler $ diskPartitionsQuery disk_id'
 
-createPartition :: Snap ()
-createPartition =
+createPartition :: SessionStore -> Snap ()
+createPartition store =
   do
     disk <- requireInt "disk_id"
     number <- requireInt "partition_number"
@@ -189,6 +250,9 @@ createPartition =
     mount <- requireString "mount_point"
     boot <- requireInt "is_boot"
     size <- requireInt "size_in_mb"
+    clearSecurityLevel store ["create partition", show disk, show number
+                             ,partition_type', mount, show boot, show size]
+                             ReadWrite
     case partition_type' of
       "Primary"  -> makeJSONHandler $ 
                     newPrimaryPartitionQuery  disk number mount boot size
@@ -198,41 +262,42 @@ createPartition =
                     newLogicalPartitionQuery  disk number mount boot size
       _          -> pass
 
-deletePartition :: Snap ()
-deletePartition =
+deletePartition :: SessionStore -> Snap ()
+deletePartition store =
   do
     partition' <- requireInt "partition_id"
+    clearSecurityLevel store ["delete partition", show partition'] ReadWrite
     makeJSONHandler $ deletePartitionQuery partition'
 
 {- CORE -}
 
-checkHost :: Snap ()
+checkHost ::  Snap ()
 checkHost =
   do
     mac <- requireString "mac"
     makeJSONHandler $ checkHostQuery mac
 
-registerHost :: Snap ()
+registerHost ::  Snap ()
 registerHost =
   do
     mac <- requireString "mac"
     makeJSONHandler $ registerHostQuery mac
 
-reportHostIP :: Snap ()
+reportHostIP ::  Snap ()
 reportHostIP =
   do
     host_id' <- requireInt "host_id"
     host_ip' <- requireInt "ip"
     makeJSONHandler $ reportHostIPQuery host_id' host_ip'
 
-isHostStaged :: Snap ()
+isHostStaged ::  Snap ()
 isHostStaged = 
   do 
     host <- requireInt "host_id"
     deploy_stage' <- requireOne $ hostIsStagedQuery host
     writeLBS . B.pack . show $ deploy_stage'
 
-fdisk :: Snap ()
+fdisk ::  Snap ()
 fdisk = 
   do
     host_id' <- requireInt "host_id"
@@ -242,7 +307,7 @@ fdisk =
 compareBy :: Ord b => (a -> b) -> a -> a -> Ordering
 compareBy f x y = compare (f x) (f y)
 
-fstab :: Snap ()
+fstab ::  Snap ()
 fstab = 
   do
     host_id' <- requireInt "host_id"
@@ -250,19 +315,19 @@ fstab =
     let mountOrderPartitions = sortBy (compareBy mount_point) partitions
     writeLBS . B.pack . unlines . map fdiskEntry $ mountOrderPartitions
 
-archive :: Snap ()
+archive ::  Snap ()
 archive =
   do
     host_id' <- requireInt "host_id"
     archive_url' <- requireOne $ archiveQuery host_id'
     writeLBS . B.pack $ archive_url'
 
-packages :: Snap ()
+packages ::  Snap ()
 packages = do host_id' <- requireInt "host_id"
               packages' <- liftIO $ getHostPackagesQuery host_id'
               writeLBS . B.pack . unlines $ packages'
 
-finished :: Snap ()
+finished ::  Snap ()
 finished = do host <- requireInt "host_id"
               mac <- requireOne $ getHostMacQuery host
               liftIO $ switchLocalbootPXE mac
