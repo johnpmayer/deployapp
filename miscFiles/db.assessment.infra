@@ -1,0 +1,15 @@
+$ORIGIN .
+$TTL 86400	; 1 day
+assessment.infra	IN SOA	router.assessment.infra. root.router.assessment.infra. (
+				102        ; serial
+				21600      ; refresh (6 hours)
+				3600       ; retry (1 hour)
+				864000     ; expire (1 week 3 days)
+				86400      ; minimum (1 day)
+				)
+			NS	router.assessment.infra.
+$ORIGIN assessment.infra.
+router			A	192.168.1.1
+$TTL 3600	; 1 hour
+ws03datacenter		A	192.168.1.118
+			TXT	"317ee1d483301a7e62648a30b90b8164ea"

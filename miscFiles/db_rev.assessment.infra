@@ -1,0 +1,14 @@
+$ORIGIN .
+$TTL 86400	; 1 day
+1.168.192.in-addr.arpa	IN SOA	router.assessment.infra. root.router.assessment.infra. (
+				44         ; serial
+				21600      ; refresh (6 hours)
+				3600       ; retry (1 hour)
+				864000     ; expire (1 week 3 days)
+				86400      ; minimum (1 day)
+				)
+			NS	router.assessment.infra.
+$ORIGIN 1.168.192.in-addr.arpa.
+1			PTR	router.assessment.infra.
+$TTL 3600	; 1 hour
+118			PTR	ws03datacenter.assessment.infra.
