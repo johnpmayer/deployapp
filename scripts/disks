@@ -1,1 +1,6 @@
-echo "disksQuery " | ghci Queries.hs
+#!/bin/sh
+#Usage: 0 parameters: disksQuery :: IO [Disk]
+ghc Queries.hs -e "disksQuery  >>= (writeFile \"disks.output\") . show" 1>&2
+cat disks.output
+echo
+rm disks.output

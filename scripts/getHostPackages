@@ -1,1 +1,6 @@
-echo "getHostPackagesQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: getHostPackagesQuery :: Int -> IO [String]
+ghc Queries.hs -e "getHostPackagesQuery  $1 >>= (writeFile \"getHostPackages.output\") . show" 1>&2
+cat getHostPackages.output
+echo
+rm getHostPackages.output

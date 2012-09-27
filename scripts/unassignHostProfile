@@ -1,1 +1,6 @@
-echo "unassignHostProfileQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: unassignHostProfileQuery :: Int -> IO Integer
+ghc Queries.hs -e "unassignHostProfileQuery  $1 >>= (writeFile \"unassignHostProfile.output\") . show" 1>&2
+cat unassignHostProfile.output
+echo
+rm unassignHostProfile.output

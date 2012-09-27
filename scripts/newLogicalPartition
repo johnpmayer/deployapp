@@ -1,1 +1,6 @@
-echo "newLogicalPartitionQuery  $1 $2 $3 $4 $5" | ghci Queries.hs
+#!/bin/sh
+#Usage: 5 parameters: newLogicalPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+ghc Queries.hs -e "newLogicalPartitionQuery  $1 $2 $3 $4 $5 >>= (writeFile \"newLogicalPartition.output\") . show" 1>&2
+cat newLogicalPartition.output
+echo
+rm newLogicalPartition.output

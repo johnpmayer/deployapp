@@ -1,1 +1,6 @@
-echo "unassignHostIPQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: unassignHostIPQuery :: Int -> IO Integer
+ghc Queries.hs -e "unassignHostIPQuery  $1 >>= (writeFile \"unassignHostIP.output\") . show" 1>&2
+cat unassignHostIP.output
+echo
+rm unassignHostIP.output

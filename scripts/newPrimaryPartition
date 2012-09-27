@@ -1,1 +1,6 @@
-echo "newPrimaryPartitionQuery  $1 $2 $3 $4 $5" | ghci Queries.hs
+#!/bin/sh
+#Usage: 5 parameters: newPrimaryPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+ghc Queries.hs -e "newPrimaryPartitionQuery  $1 $2 $3 $4 $5 >>= (writeFile \"newPrimaryPartition.output\") . show" 1>&2
+cat newPrimaryPartition.output
+echo
+rm newPrimaryPartition.output

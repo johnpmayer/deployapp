@@ -1,1 +1,6 @@
-echo "hostsQuery " | ghci Queries.hs
+#!/bin/sh
+#Usage: 0 parameters: hostsQuery :: IO [Host]
+ghc Queries.hs -e "hostsQuery  >>= (writeFile \"hosts.output\") . show" 1>&2
+cat hosts.output
+echo
+rm hosts.output

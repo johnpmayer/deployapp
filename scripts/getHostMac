@@ -1,1 +1,6 @@
-echo "getHostMacQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: getHostMacQuery :: Int -> IO [String]
+ghc Queries.hs -e "getHostMacQuery  $1 >>= (writeFile \"getHostMac.output\") . show" 1>&2
+cat getHostMac.output
+echo
+rm getHostMac.output

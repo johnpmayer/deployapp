@@ -1,1 +1,6 @@
-echo "fdiskQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: fdiskQuery :: Int -> IO [Partition]
+ghc Queries.hs -e "fdiskQuery  $1 >>= (writeFile \"fdisk.output\") . show" 1>&2
+cat fdisk.output
+echo
+rm fdisk.output

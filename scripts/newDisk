@@ -1,1 +1,6 @@
-echo "newDiskQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: newDiskQuery :: String -> IO Integer
+ghc Queries.hs -e "newDiskQuery  $1 >>= (writeFile \"newDisk.output\") . show" 1>&2
+cat newDisk.output
+echo
+rm newDisk.output

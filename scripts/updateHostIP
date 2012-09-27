@@ -1,1 +1,6 @@
-echo "updateHostIPQuery  $1 $2" | ghci Queries.hs
+#!/bin/sh
+#Usage: 2 parameters: updateHostIPQuery :: Int -> Int -> IO Integer
+ghc Queries.hs -e "updateHostIPQuery  $1 $2 >>= (writeFile \"updateHostIP.output\") . show" 1>&2
+cat updateHostIP.output
+echo
+rm updateHostIP.output

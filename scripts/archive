@@ -1,1 +1,6 @@
-echo "archiveQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: archiveQuery :: Int -> IO [String]
+ghc Queries.hs -e "archiveQuery  $1 >>= (writeFile \"archive.output\") . show" 1>&2
+cat archive.output
+echo
+rm archive.output

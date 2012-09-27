@@ -1,1 +1,6 @@
-echo "newExtendedPartitionQuery  $1 $2 $3 $4 $5" | ghci Queries.hs
+#!/bin/sh
+#Usage: 5 parameters: newExtendedPartitionQuery :: Int -> Int -> String -> Int -> Int -> IO Integer
+ghc Queries.hs -e "newExtendedPartitionQuery  $1 $2 $3 $4 $5 >>= (writeFile \"newExtendedPartition.output\") . show" 1>&2
+cat newExtendedPartition.output
+echo
+rm newExtendedPartition.output

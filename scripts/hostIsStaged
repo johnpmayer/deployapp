@@ -1,1 +1,6 @@
-echo "hostIsStagedQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: hostIsStagedQuery :: Int -> IO [Int]
+ghc Queries.hs -e "hostIsStagedQuery  $1 >>= (writeFile \"hostIsStaged.output\") . show" 1>&2
+cat hostIsStaged.output
+echo
+rm hostIsStaged.output

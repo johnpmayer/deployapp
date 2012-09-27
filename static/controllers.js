@@ -132,7 +132,7 @@ function Login($scope, $http) {
                  $scope.reload_top_level();
              }
              
-         }).error(copout);
+         });
         
     $scope.login = function() {
         var data = $.param({ username : $scope.username,

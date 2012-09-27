@@ -1,1 +1,6 @@
-echo "softwaresQuery " | ghci Queries.hs
+#!/bin/sh
+#Usage: 0 parameters: softwaresQuery :: IO [Software]
+ghc Queries.hs -e "softwaresQuery  >>= (writeFile \"softwares.output\") . show" 1>&2
+cat softwares.output
+echo
+rm softwares.output

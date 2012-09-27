@@ -1,1 +1,6 @@
-echo "profilesQuery " | ghci Queries.hs
+#!/bin/sh
+#Usage: 0 parameters: profilesQuery :: IO [Profile]
+ghc Queries.hs -e "profilesQuery  >>= (writeFile \"profiles.output\") . show" 1>&2
+cat profiles.output
+echo
+rm profiles.output

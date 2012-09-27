@@ -1,1 +1,6 @@
-echo "deleteProfileQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: deleteProfileQuery :: Int -> IO Integer
+ghc Queries.hs -e "deleteProfileQuery  $1 >>= (writeFile \"deleteProfile.output\") . show" 1>&2
+cat deleteProfile.output
+echo
+rm deleteProfile.output

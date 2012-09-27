@@ -1,1 +1,6 @@
-echo "getProfilePackagesQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: getProfilePackagesQuery :: Int -> IO [Software]
+ghc Queries.hs -e "getProfilePackagesQuery  $1 >>= (writeFile \"getProfilePackages.output\") . show" 1>&2
+cat getProfilePackages.output
+echo
+rm getProfilePackages.output

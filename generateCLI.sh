@@ -7,10 +7,7 @@ do
     
     funcName=`echo $line | sed 's/Query ::.*$//'`
     nParams=`echo $line | awk -F '->' '{print NF - 1}'`
-    
-    echo $funcName
-    echo "Usage: $nParams parameters: $line"
-    
+
     appendArgs=""
     count=1
     
@@ -20,8 +17,17 @@ do
         count=`expr $count + 1 `
     done
     
-    echo $appendArgs
-
-    echo "echo \"${funcName}Query $appendArgs\" | ghci Queries.hs" > scripts/$funcName
+    tmpFile="${funcName}.output"
+    scriptFile=scripts/$funcName
+    >$scriptFile
+    echo "#!/bin/sh" >>$scriptFile
+#    echo "set -x" >>$scriptFile
+    echo "#Usage: $nParams parameters: $line" >>$scriptFile
+    expr="${funcName}Query $appendArgs >>= (writeFile \\\"$tmpFile\\\") . show"
+    echo "ghc Queries.hs -e \"$expr\" 1>&2" >> $scriptFile
+    echo "cat $tmpFile" >>$scriptFile
+    echo "echo" >> $scriptFile
+    echo "rm $tmpFile" >>$scriptFile
+    chmod +x $scriptFile
     
 done

@@ -1,1 +1,6 @@
-echo "updateHostProfileQuery  $1 $2" | ghci Queries.hs
+#!/bin/sh
+#Usage: 2 parameters: updateHostProfileQuery :: Int -> Int -> IO Integer
+ghc Queries.hs -e "updateHostProfileQuery  $1 $2 >>= (writeFile \"updateHostProfile.output\") . show" 1>&2
+cat updateHostProfile.output
+echo
+rm updateHostProfile.output

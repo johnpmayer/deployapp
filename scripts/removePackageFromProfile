@@ -1,1 +1,6 @@
-echo "removePackageFromProfileQuery  $1 $2" | ghci Queries.hs
+#!/bin/sh
+#Usage: 2 parameters: removePackageFromProfileQuery :: Int -> Int -> IO Integer
+ghc Queries.hs -e "removePackageFromProfileQuery  $1 $2 >>= (writeFile \"removePackageFromProfile.output\") . show" 1>&2
+cat removePackageFromProfile.output
+echo
+rm removePackageFromProfile.output

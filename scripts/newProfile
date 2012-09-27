@@ -1,1 +1,6 @@
-echo "newProfileQuery  $1 $2 $3 $4" | ghci Queries.hs
+#!/bin/sh
+#Usage: 4 parameters: newProfileQuery :: String -> String -> Int -> Int -> IO Integer
+ghc Queries.hs -e "newProfileQuery  $1 $2 $3 $4 >>= (writeFile \"newProfile.output\") . show" 1>&2
+cat newProfile.output
+echo
+rm newProfile.output

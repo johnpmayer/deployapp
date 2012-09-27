@@ -1,1 +1,6 @@
-echo "diskPartitionsQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: diskPartitionsQuery :: Int -> IO [Partition]
+ghc Queries.hs -e "diskPartitionsQuery  $1 >>= (writeFile \"diskPartitions.output\") . show" 1>&2
+cat diskPartitions.output
+echo
+rm diskPartitions.output

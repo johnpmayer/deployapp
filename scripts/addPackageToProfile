@@ -1,1 +1,6 @@
-echo "addPackageToProfileQuery  $1 $2" | ghci Queries.hs
+#!/bin/sh
+#Usage: 2 parameters: addPackageToProfileQuery :: Int -> Int -> IO Integer
+ghc Queries.hs -e "addPackageToProfileQuery  $1 $2 >>= (writeFile \"addPackageToProfile.output\") . show" 1>&2
+cat addPackageToProfile.output
+echo
+rm addPackageToProfile.output

@@ -1,1 +1,6 @@
-echo "markHostHotQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: markHostHotQuery :: Int -> IO Integer
+ghc Queries.hs -e "markHostHotQuery  $1 >>= (writeFile \"markHostHot.output\") . show" 1>&2
+cat markHostHot.output
+echo
+rm markHostHot.output

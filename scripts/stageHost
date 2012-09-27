@@ -1,1 +1,6 @@
-echo "stageHostQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: stageHostQuery :: Int -> IO Integer
+ghc Queries.hs -e "stageHostQuery  $1 >>= (writeFile \"stageHost.output\") . show" 1>&2
+cat stageHost.output
+echo
+rm stageHost.output

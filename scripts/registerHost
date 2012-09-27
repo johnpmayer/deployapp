@@ -1,1 +1,6 @@
-echo "registerHostQuery  $1" | ghci Queries.hs
+#!/bin/sh
+#Usage: 1 parameters: registerHostQuery :: String -> IO Integer
+ghc Queries.hs -e "registerHostQuery  $1 >>= (writeFile \"registerHost.output\") . show" 1>&2
+cat registerHost.output
+echo
+rm registerHost.output
