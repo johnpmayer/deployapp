@@ -27,16 +27,19 @@ data User = User { username :: String
                  } deriving (Show)
 
 admin :: User
-admin = User "admin" "awesome" ReadWrite
+admin = User "admin" "admin" Admin
+
+dev :: User
+dev = User "dev" "dev" ReadWrite
 
 report :: User
-report = User "report" "easy" ReadOnly
+report = User "report" "report" ReadOnly
 
 type UserStore = Map String User
 
 userStore :: UserStore
 userStore = M.fromList $ zip (map username users) users
-              where users = [admin, report]
+              where users = [admin, dev, report]
 
 data Session = Session { user :: User
                        , expiry :: UTCTime

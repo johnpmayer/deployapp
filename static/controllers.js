@@ -30,7 +30,7 @@ function Deploy($scope, $http) {
     $scope.reload_disks = function() {
         $scope.loading += 1;
         $http.get('app/disks')
-            .success(function(data) {
+            .success(function(data) { 
                 $scope.disks = data;
                 
                 //alert("Disks: " + JSON.stringify($scope.disks));
@@ -51,7 +51,7 @@ function Deploy($scope, $http) {
     $scope.image_lookup = {}
     $scope.reload_images = function() {
         $http.get('app/images')
-            .success(function(data) {
+            .success(function(data) { 
                 $scope.images = data;
                 for (var index in $scope.images) {
                     var image = $scope.images[index];
@@ -68,7 +68,7 @@ function Deploy($scope, $http) {
         $scope.profile_lookup[-1] = 'unassigned';
         
         $http.get('app/profiles')
-            .success(function(data) {
+            .success(function(data) { 
                 $scope.profiles = data;
                 
                 for (var index in $scope.profiles) {
@@ -91,7 +91,7 @@ function Deploy($scope, $http) {
     $scope.reload_softwares = function() {
         $scope.loading += 1;
         $http.get('app/softwares')
-            .success(function(data) {
+            .success(function(data) { 
                 $scope.softwares = data;
                 $scope.loading -= 1;
             })
@@ -99,10 +99,17 @@ function Deploy($scope, $http) {
     };
     
     $scope.reload_hosts = function() {
-        $http.get('app/hosts').success(function(data) {
+        $http.get('app/hosts').success(function(data) { 
             $scope.hosts = data;
         });
     }
+    
+    $scope.reload_images = function() {
+        $http.get('app/images/')
+            .success(function(data) { 
+                $scope.images = data;
+            }).error(copout);
+    };
     
     $scope.reload_top_level = function() {
         $scope.reload_hosts();
@@ -119,11 +126,12 @@ function Login($scope, $http) {
     
     $http({ method   : 'GET',
             url      : 'app/check'}
-         ).success(function(data) {
+         ).success(function(data) { 
              if (JSON.parse(data) === true) {
                  $scope.set_logged_in(true);
+                 $scope.reload_top_level();
              }
-             $scope.reload_top_level();
+             
          }).error(copout);
         
     $scope.login = function() {
@@ -136,7 +144,7 @@ function Login($scope, $http) {
                 url       : 'app/login',
                 data      : data,
                 headers   : snap_form_headers}
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  if (JSON.parse(data) === true) {
                      $scope.set_logged_in(true);
@@ -175,7 +183,7 @@ function Host($scope, $http) {
                 url           : 'app/host/profile',
                 data          : data,
                 headers       : snap_form_headers }
-              ).success(function(data) {
+              ).success(function(data) { 
                   //alert(data);
                   $scope.reload_hosts()
               }).error(copout);
@@ -196,7 +204,7 @@ function Host($scope, $http) {
                 url            : 'app/host/ip',
                 data           : data,
                 headers        : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_hosts();
              }).error(copout);
@@ -232,7 +240,7 @@ function Host($scope, $http) {
                 url            : 'app/host/ping',
                 data           : data,
                 headers        : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.host.ping.in_progress = false;
                  var resp = data;
@@ -267,7 +275,7 @@ function Host($scope, $http) {
                 url            : 'app/host/reboot',
                 data           : data,
                 headers        : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  var resp = data;
                  if (resp == 0) {
@@ -293,7 +301,7 @@ function Host($scope, $http) {
                 url           : 'app/host/profile',
                 data          : data,
                 headers       : snap_form_headers }
-              ).success(function(data) {
+              ).success(function(data) { 
                   //alert(data);
                   $scope.reload_hosts()
               }).error(copout);
@@ -312,7 +320,7 @@ function Host($scope, $http) {
                 url           : 'app/host/ip',
                 data          : data,
                 headers       : snap_form_headers }
-              ).success(function(data) {
+              ).success(function(data) { 
                   //alert(data);
                   $scope.reload_hosts()
               }).error(copout);
@@ -326,7 +334,7 @@ function Host($scope, $http) {
                 url     : 'app/host/stage',
                 data    : data,
                 headers : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  alert(data);
                  $scope.reload_hosts();
              }).error(copout);
@@ -351,7 +359,7 @@ function Profiles($scope, $http) {
                 url          : 'app/profile',
                 data         : data,
                 headers      : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_profiles();
              }).error(copout);
@@ -383,7 +391,7 @@ function Profile($scope, $http) {
                 url        : 'app/profile',
                 data       : data,
                 headers    : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_profiles();
              }).error(copout);
@@ -397,13 +405,15 @@ function Profile($scope, $http) {
         
         $http({ method : 'GET',
                 url    : 'app/profile/' + profile_id + '/packages' }
-             ).success(function(data) {
+             ).success(function(data) { 
                  $scope.profile.packages = data;
              }).error(copout);
         
     }
     
-    $scope.profile.reload_packages();
+    if($scope.logged_in.status) {
+        $scope.profile.reload_packages();
+    }
     
 }
 
@@ -422,7 +432,7 @@ function NewSoftware($scope, $http) {
                 data    : data,
                 headers : snap_form_headers
               }
-             ).success(function(data) {
+             ).success(function(data) { 
                  alert(data);
                  $scope.profile.reload_packages();
              }).error(copout);
@@ -447,7 +457,7 @@ function ExistingSoftware($scope, $http) {
                 data    : data,
                 headers : snap_form_headers
               }
-             ).success(function(data) {
+             ).success(function(data) { 
                  alert(data);
                  $scope.profile.reload_packages();
              }).error(copout);
@@ -456,16 +466,6 @@ function ExistingSoftware($scope, $http) {
 }
 
 function Images($scope, $http) {
-    
-    $scope.reload_images = function() {
-        $http.get('app/images/')
-            .success(function(data) {
-                $scope.images = data;
-            }).error(copout);
-    };
-    
-    $scope.reload_images();
-    
     
 }
 
@@ -496,7 +496,7 @@ function Disks($scope, $http) {
                data    : $.param({ disk_name : 
                                    $scope.new_disk.name }),
                headers : snap_form_headers}
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_disks();
              }).error(copout);
@@ -518,7 +518,7 @@ function Disk($scope, $http) {
                data    : $.param({ disk_id :
                                    $scope.disk.id }),
                headers : snap_form_headers}
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_disks();
              }).error(copout);
@@ -531,12 +531,14 @@ function Partitions($scope, $http) {
     
     $scope.reload_partitions = function() {
         $http.get('app/disk/'+$scope.disk.id+"/partitions")
-            .success(function(data) {
+            .success(function(data) { 
                 $scope.partitions = data;
             }).error(copout);
     };
     
-    $scope.reload_partitions();
+    if ($scope.logged_in.status) {
+        $scope.reload_partitions();
+    }
     
     $scope.active_details[$scope.disk.id] = false;
     
@@ -573,7 +575,7 @@ function Partitions($scope, $http) {
                 url       : 'app/disk/partition',
                 data      : data,
                 headers   : snap_form_headers}
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_partitions();
              }).error(copout);
@@ -606,7 +608,7 @@ function Partition($scope, $http) {
                     { partition_id: $scope.partition.id }
                 ),
                 headers : snap_form_headers }
-             ).success(function(data) {
+             ).success(function(data) { 
                  //alert(data);
                  $scope.reload_partitions();
              }).error(copout);
